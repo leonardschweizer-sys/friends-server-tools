@@ -1,0 +1,41 @@
+name: FriendsTools
+version: '${version}'
+main: net.friendsserver.tools.FriendsTools
+api-version: '1.21'
+description: Chest log, biome changer, team diamond balance and small fixes for our server
+softdepend: [BetterTeams]
+
+commands:
+  chestlog:
+    description: Shows who opened or changed the chest, barrel or shulker box you are looking at
+    usage: /chestlog [page]
+    aliases: [cl]
+    permission: friendstools.chestlog
+  biome:
+    description: Changes the biome of the chunk you are standing in (costs diamonds)
+    usage: /biome <biome>
+    aliases: [chunkbiome]
+    permission: friendstools.biome
+  teambal:
+    description: Shows how many diamonds are in your team ender chest
+    usage: /teambal [top]
+    aliases: [tbal]
+    permission: friendstools.teambal
+  friendstools:
+    description: Reloads the FriendsTools config
+    usage: /friendstools reload
+    permission: friendstools.admin
+
+permissions:
+  friendstools.chestlog:
+    description: Use /chestlog
+    default: true
+  friendstools.biome:
+    description: Use /biome
+    default: true
+  friendstools.teambal:
+    description: Use /teambal
+    default: true
+  friendstools.admin:
+    description: Reload the config
+    default: op

@@ -1,0 +1,98 @@
+# FriendsTools config. After editing, run /friendstools reload (or restart).
+# Messages use MiniMessage formatting: <red>, <gray>, <yellow>, <b> ...
+
+chestlog:
+  enabled: true
+  # How many entries are kept per chest/barrel/shulker box (oldest are dropped first)
+  max-entries-per-container: 100
+  # Entries older than this are removed (0 = keep forever)
+  keep-days: 90
+  # Entries shown per page in /chestlog
+  page-size: 8
+  # How far away the container you look at may be
+  max-distance: 6
+
+biome:
+  enabled: true
+  cost-diamonds: 32
+  # Worlds where /biome works (Bukkit world names)
+  worlds:
+    - world
+  # Biomes players can choose. Must be overworld biome names without "minecraft:".
+  allowed:
+    - plains
+    - sunflower_plains
+    - meadow
+    - forest
+    - flower_forest
+    - birch_forest
+    - old_growth_birch_forest
+    - dark_forest
+    - pale_garden
+    - cherry_grove
+    - taiga
+    - old_growth_pine_taiga
+    - old_growth_spruce_taiga
+    - snowy_taiga
+    - snowy_plains
+    - ice_spikes
+    - grove
+    - snowy_slopes
+    - swamp
+    - mangrove_swamp
+    - jungle
+    - sparse_jungle
+    - bamboo_jungle
+    - savanna
+    - savanna_plateau
+    - windswept_savanna
+    - windswept_hills
+    - windswept_forest
+    - desert
+    - badlands
+    - wooded_badlands
+    - eroded_badlands
+    - beach
+    - snowy_beach
+    - stony_shore
+    - river
+    - frozen_river
+    - mushroom_fields
+    - ocean
+    - warm_ocean
+    - lukewarm_ocean
+    - cold_ocean
+    - frozen_ocean
+
+team-balance:
+  enabled: true
+  # A diamond block counts as 9 diamonds
+  count-diamond-blocks: true
+  # Also count diamonds inside shulker boxes stored in the team ender chest
+  count-inside-shulkers: true
+  # Recount all teams every X minutes (0 = only when someone closes the team ender chest)
+  recount-minutes: 10
+
+weather-fix:
+  # Re-sends the correct weather after joining and after changing worlds
+  # (fixes rain from survival still showing in the lobby)
+  enabled: true
+
+messages:
+  prefix: "<dark_gray>[<gold>Server</gold>]</dark_gray> "
+  not-enough-diamonds: "<red>You don't have enough diamonds to do this right now."
+  biome-usage: "<gray>Usage: <white>/biome [name]</white> (costs <aqua><cost> diamonds</aqua>, changes the chunk you stand in)"
+  biome-unknown: "<red>Unknown or not allowed biome: <white><biome></white>. Use tab to see the list."
+  biome-wrong-world: "<red>You can only change biomes in survival."
+  biome-done: "<green>This chunk is now <white><biome></white>. <gray>(-<cost> diamonds)"
+  chestlog-not-container: "<red>Look at a chest, barrel or shulker box (max <distance> blocks away)."
+  chestlog-empty: "<gray>Nothing logged for this container yet."
+  chestlog-header: "<gold>Chest log</gold> <gray><x> <y> <z> · page <page>/<pages></gray>"
+  chestlog-line: "<dark_gray><ago></dark_gray> <yellow><player></yellow> <white><action></white>"
+  teambal-no-team: "<red>You are not in a team."
+  teambal-own: "<gray>Team <white><team></white> has <aqua><amount> diamonds</aqua> in its team ender chest."
+  teambal-top-header: "<gold>Richest teams</gold> <gray>(diamonds in team ender chest)"
+  teambal-top-line: "<gray><rank>.</gray> <white><team></white> <aqua><amount></aqua>"
+  teambal-unavailable: "<red>BetterTeams is not installed."
+  players-only: "<red>Only players can use this."
+  reloaded: "<green>FriendsTools config reloaded."
