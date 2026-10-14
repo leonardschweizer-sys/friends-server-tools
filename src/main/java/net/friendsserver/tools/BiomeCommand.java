@@ -1,9 +1,16 @@
 package net.friendsserver.tools;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+import io.papermc.paper.registry.TypedKey;
+import io.papermc.paper.registry.tag.TagKey;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
+import org.bukkit.Registry;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,8 +21,11 @@ import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * /biome <name>: changes the biome of the whole chunk the player stands in (full height)
@@ -26,7 +36,14 @@ final class BiomeCommand implements CommandExecutor, TabCompleter {
     /** 16 x 16 x 64 = 16384 blocks per /fillbiome call, well under the vanilla limit of 32768. */
     private static final int SLICE_HEIGHT = 64;
 
+    /** Vanilla tags for Nether and End biomes. Every other biome counts as an overworld biome. */
+    private static final TagKey<Biome> IS_NETHER =
+            TagKey.create(RegistryKey.BIOME, Key.key("minecraft", "is_nether"));
+    private static final TagKey<Biome> IS_END =
+            TagKey.create(RegistryKey.BIOME, Key.key("minecraft", "is_end"));
+
     private final FriendsTools plugin;
+    private boolean warnedRegistry;
 
     BiomeCommand(FriendsTools plugin) {
         this.plugin = plugin;
@@ -49,10 +66,7 @@ final class BiomeCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String biome = args[0].toLowerCase(Locale.ROOT);
-        if (biome.startsWith("minecraft:")) {
-            biome = biome.substring("minecraft:".length());
-        }
+        String biome = shortName(args[0].toLowerCase(Locale.ROOT));
         if (!allowed().contains(biome)) {
             msg.send(player, "biome-unknown", "biome", biome);
             return true;
@@ -93,8 +107,8 @@ final class BiomeCommand implements CommandExecutor, TabCompleter {
         for (int y = minY; y <= maxY; y += SLICE_HEIGHT) {
             int y2 = Math.min(y + SLICE_HEIGHT - 1, maxY);
             String cmd = String.format(Locale.ROOT,
-                    "minecraft:execute in %s run fillbiome %d %d %d %d %d %d minecraft:%s",
-                    dimension, x1, y, z1, x1 + 15, y2, z1 + 15, biome);
+                    "minecraft:execute in %s run fillbiome %d %d %d %d %d %d %s",
+                    dimension, x1, y, z1, x1 + 15, y2, z1 + 15, fullName(biome));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
         }
         plugin.getLogger().info(player.getName() + " changed chunk " + chunk.getX() + "," + chunk.getZ()
@@ -113,10 +127,67 @@ final class BiomeCommand implements CommandExecutor, TabCompleter {
         return allowed().stream().filter(b -> b.startsWith(start)).toList();
     }
 
+    /**
+     * Biomes players may pick, sorted. With biome.all-overworld-biomes (default) this is every overworld
+     * biome the running server knows, minus biome.blocked, so biomes added by Minecraft updates appear
+     * without editing the config. Otherwise it is the biome.allowed list.
+     */
     private List<String> allowed() {
-        return plugin.getConfig().getStringList("biome.allowed").stream()
-                .map(s -> s.toLowerCase(Locale.ROOT))
-                .toList();
+        Set<String> result = new TreeSet<>();
+        if (plugin.getConfig().getBoolean("biome.all-overworld-biomes", true)) {
+            result.addAll(overworldBiomes());
+        }
+        if (result.isEmpty()) {
+            for (String name : plugin.getConfig().getStringList("biome.allowed")) {
+                result.add(shortName(name.toLowerCase(Locale.ROOT)));
+            }
+        }
+        for (String name : plugin.getConfig().getStringList("biome.blocked")) {
+            result.remove(shortName(name.toLowerCase(Locale.ROOT)));
+        }
+        return List.copyOf(result);
+    }
+
+    /**
+     * Every biome the running server knows except Nether and End biomes and the_void. Read from the live
+     * registry, so new biomes from Minecraft updates (e.g. dappled_forest in 26.3) are included automatically.
+     * Returns an empty set if the registry can't be read.
+     */
+    private Set<String> overworldBiomes() {
+        Set<String> names = new TreeSet<>();
+        try {
+            Registry<Biome> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME);
+            Set<String> notOverworld = new HashSet<>();
+            for (TypedKey<Biome> key : registry.getTag(IS_NETHER).values()) {
+                notOverworld.add(key.key().asString());
+            }
+            for (TypedKey<Biome> key : registry.getTag(IS_END).values()) {
+                notOverworld.add(key.key().asString());
+            }
+            notOverworld.add("minecraft:the_void");
+            for (Biome biome : registry) {
+                String key = biome.getKey().asString();
+                if (!notOverworld.contains(key)) {
+                    names.add(shortName(key));
+                }
+            }
+        } catch (RuntimeException e) {
+            if (!warnedRegistry) {
+                warnedRegistry = true;
+                plugin.getLogger().warning("Could not read the biome registry, using biome.allowed instead: " + e);
+            }
+            names.clear();
+        }
+        return names;
+    }
+
+    /** "minecraft:plains" -> "plains"; biomes from datapacks keep their namespace. */
+    private static String shortName(String name) {
+        return name.startsWith("minecraft:") ? name.substring("minecraft:".length()) : name;
+    }
+
+    private static String fullName(String name) {
+        return name.contains(":") ? name : "minecraft:" + name;
     }
 
     /** Counts only normal diamonds (renamed ones are ignored, because removeItem can't take them). */

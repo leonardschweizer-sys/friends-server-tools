@@ -18,6 +18,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -152,42 +153,59 @@ final class TeamBalance implements Listener, CommandExecutor, TabCompleter {
         return null;
     }
 
+    /** How deep to look into containers inside containers (bundle in shulker in bundle ...). */
+    private static final int MAX_DEPTH = 6;
+
+    /** What to count, read from the config once per recount. */
+    private record CountRules(boolean blocks, boolean shulkers, boolean bundles) {
+    }
+
     private int countDiamonds(Inventory inventory) {
         if (inventory == null) {
             return 0;
         }
-        boolean blocks = plugin.getConfig().getBoolean("team-balance.count-diamond-blocks", true);
-        boolean shulkers = plugin.getConfig().getBoolean("team-balance.count-inside-shulkers", true);
-        int total = 0;
+        CountRules rules = new CountRules(
+                plugin.getConfig().getBoolean("team-balance.count-diamond-blocks", true),
+                plugin.getConfig().getBoolean("team-balance.count-inside-shulkers", true),
+                plugin.getConfig().getBoolean("team-balance.count-inside-bundles", true));
+        long total = 0;
         for (ItemStack item : inventory.getContents()) {
-            total += countItem(item, blocks, shulkers);
+            total += countItem(item, rules, 0);
         }
-        return total;
+        return (int) Math.min(total, Integer.MAX_VALUE);
     }
 
-    private static int countItem(ItemStack item, boolean blocks, boolean shulkers) {
-        if (item == null) {
+    /**
+     * Diamonds in one stack: plain diamonds, diamond blocks (x9), and everything inside
+     * bundles and shulker boxes, including bundles inside shulkers and bundles inside bundles.
+     */
+    private static long countItem(ItemStack item, CountRules rules, int depth) {
+        if (item == null || item.getType().isAir()) {
             return 0;
         }
         Material type = item.getType();
         if (type == Material.DIAMOND) {
             return item.getAmount();
         }
-        if (blocks && type == Material.DIAMOND_BLOCK) {
-            return item.getAmount() * 9;
+        if (rules.blocks() && type == Material.DIAMOND_BLOCK) {
+            return item.getAmount() * 9L;
         }
-        if (shulkers && item.hasItemMeta()) {
-            ItemMeta meta = item.getItemMeta();
-            if (meta instanceof BlockStateMeta bsm && bsm.hasBlockState()
-                    && bsm.getBlockState() instanceof ShulkerBox box) {
-                int inside = 0;
-                for (ItemStack inner : box.getInventory().getContents()) {
-                    // no nested shulkers in vanilla, so don't recurse
-                    inside += countItem(inner, blocks, false);
-                }
-                return inside * item.getAmount();
+        if (depth >= MAX_DEPTH || !item.hasItemMeta()) {
+            return 0;
+        }
+        ItemMeta meta = item.getItemMeta();
+        long inside = 0;
+        if (rules.bundles() && meta instanceof BundleMeta bundle) {
+            // all bundle colors use BundleMeta
+            for (ItemStack inner : bundle.getItems()) {
+                inside += countItem(inner, rules, depth + 1);
+            }
+        } else if (rules.shulkers() && meta instanceof BlockStateMeta bsm && bsm.hasBlockState()
+                && bsm.getBlockState() instanceof ShulkerBox box) {
+            for (ItemStack inner : box.getInventory().getContents()) {
+                inside += countItem(inner, rules, depth + 1);
             }
         }
-        return 0;
+        return inside * item.getAmount();
     }
 }

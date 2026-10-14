@@ -18,7 +18,16 @@ biome:
   # Worlds where /biome works (Bukkit world names)
   worlds:
     - world
-  # Biomes players can choose. Must be overworld biome names without "minecraft:".
+  # true = players can pick every biome the server knows except Nether and End biomes,
+  # so biomes added by Minecraft updates (like dappled_forest in 26.3) show up automatically.
+  # false = only the biomes in "allowed" below.
+  all-overworld-biomes: true
+  # Never offered, in both modes. Cave biomes make no sense for a whole chunk.
+  blocked:
+    - deep_dark
+    - dripstone_caves
+    - lush_caves
+  # Only used when all-overworld-biomes is false. Biome names without "minecraft:".
   allowed:
     - plains
     - sunflower_plains
@@ -58,6 +67,7 @@ biome:
     - river
     - frozen_river
     - mushroom_fields
+    - dappled_forest
     - ocean
     - warm_ocean
     - lukewarm_ocean
@@ -70,6 +80,9 @@ team-balance:
   count-diamond-blocks: true
   # Also count diamonds inside shulker boxes stored in the team ender chest
   count-inside-shulkers: true
+  # Also count diamonds inside bundles (any color), including bundles inside shulker boxes
+  # and bundles inside bundles
+  count-inside-bundles: true
   # Recount all teams every X minutes (0 = only when someone closes the team ender chest)
   recount-minutes: 10
 
