@@ -38,6 +38,11 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(speedrun, this);
         bind("speedrunreset", speedrun);
 
+        // Fishing-rod pearl stasis that survives portals, world changes and relogs
+        RemoteStasis stasis = new RemoteStasis(this);
+        getServer().getPluginManager().registerEvents(stasis, this);
+        stasis.start();
+
         // Weather fix
         getServer().getPluginManager().registerEvents(new WeatherFix(this), this);
 

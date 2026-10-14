@@ -105,6 +105,16 @@ speedrun:
   # Minimum time between two resets
   cooldown-seconds: 60
 
+stasis:
+  # A fishing bobber resting on a wooden or weighted pressure plate becomes a lasting link: an invisible
+  # armor stand keeps the plate pressed even when the bobber disappears (portal, other world, relog).
+  # Using any fishing rod again, from anywhere, removes it and fires the stasis. One link per player.
+  enabled: true
+  worlds:
+    - world
+    - world_nether
+    - world_the_end
+
 weather-fix:
   # Re-sends the correct weather after joining and after changing worlds
   # (fixes rain from survival still showing in the lobby)
@@ -135,5 +145,9 @@ messages:
   speedrun-cooldown: "<red>The speedrun world was just reset. Try again in <seconds>s."
   speedrun-closed: "<red>The speedrun world is being reset right now. Try again in a moment."
   speedrun-disabled: "<red>Speedrun resets are turned off."
+  stasis-linked: "<aqua>Stasis linked.</aqua> <gray>Use any fishing rod, from anywhere, to trigger it."
+  stasis-triggered: "<aqua>Stasis triggered."
+  stasis-missing: "<gray>Your stasis link was already gone (armor stand removed or world reset)."
+  stasis-broken: "<gray>Your stasis link was removed because its pressure plate was broken."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."
