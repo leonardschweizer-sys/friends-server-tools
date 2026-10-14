@@ -58,6 +58,7 @@ final class SpeedrunReset implements Listener, CommandExecutor {
     private long lastResetMillis;
     private long seed;
     private String waitingForWorld;
+    private UUID resetter;
     private BukkitTask evacuateTask;
     private BukkitTask timeoutTask;
 
@@ -108,17 +109,19 @@ final class SpeedrunReset implements Listener, CommandExecutor {
             confirmUntil.remove(requester.getUniqueId());
         }
 
-        start(name);
+        start(replyTo);
         return true;
     }
 
     // ------------------------------------------------------------------ reset steps
 
-    private void start(String resetBy) {
+    private void start(CommandSender resetBy) {
         Messages msg = plugin.messages();
         state = State.EVACUATING;
-        plugin.getLogger().info(resetBy + " started a speedrun reset.");
-        msg.broadcast("speedrun-resetting", "player", resetBy);
+        resetter = resetBy instanceof Player p ? p.getUniqueId() : null;
+        plugin.getLogger().info(resetBy.getName() + " started a speedrun reset.");
+        // Only the player who reset gets the progress messages (no global broadcast)
+        msg.send(resetBy, "speedrun-resetting");
 
         String lobby = plugin.getConfig().getString("speedrun.lobby-world", "lobby");
         for (Player player : playersInRun()) {
@@ -218,7 +221,7 @@ final class SpeedrunReset implements Listener, CommandExecutor {
         state = State.IDLE;
         lastResetMillis = System.currentTimeMillis();
         plugin.getLogger().info("Speedrun reset done. Seed: " + seed);
-        plugin.messages().broadcast("speedrun-ready", "seed", String.valueOf(seed));
+        tellResetter("speedrun-ready", "seed", String.valueOf(seed));
     }
 
     private void fail(String reason) {
@@ -227,7 +230,15 @@ final class SpeedrunReset implements Listener, CommandExecutor {
         waitingForWorld = null;
         regenQueue.clear();
         cancelTimeout();
-        plugin.messages().broadcast("speedrun-failed");
+        tellResetter("speedrun-failed");
+    }
+
+    /** Messages the player who started the reset, if they are still online (the console log has it anyway). */
+    private void tellResetter(String key, String... pairs) {
+        Player player = resetter != null ? Bukkit.getPlayer(resetter) : null;
+        if (player != null) {
+            plugin.messages().send(player, key, pairs);
+        }
     }
 
     // ------------------------------------------------------------------ keep people out during a reset

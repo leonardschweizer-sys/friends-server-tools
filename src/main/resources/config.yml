@@ -140,7 +140,7 @@ messages:
   teambal-top-line: "<gray><rank>.</gray> <white><team></white> <aqua><amount></aqua>"
   teambal-unavailable: "<red>BetterTeams is not installed."
   speedrun-confirm: "<yellow>Click again within <seconds> seconds to reset the speedrun world for everyone.</yellow> <gray>(<players> player(s) in the run right now)"
-  speedrun-resetting: "<gold><player></gold> <gray>is resetting the speedrun world...</gray>"
+  speedrun-resetting: "<gray>Resetting the speedrun world, this takes about a minute...</gray>"
   speedrun-evacuated: "<gray>The speedrun world is being reset, taking you to the lobby."
   speedrun-ready: "<green>The new speedrun world is ready!</green> <gray>Seed: <white><seed></white> · join with</gray> <white>/speedrun</white>"
   speedrun-failed: "<red>The speedrun reset failed. An admin needs to check the console."
