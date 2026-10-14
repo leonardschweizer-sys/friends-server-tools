@@ -2,7 +2,7 @@ name: FriendsTools
 version: '${version}'
 main: net.friendsserver.tools.FriendsTools
 api-version: '1.21'
-description: Chest log, biome changer, team diamond balance and small fixes for our server
+description: Chest log, biome changer, team diamond balance, speedrun reset and small fixes for our server
 softdepend: [BetterTeams]
 
 commands:
@@ -21,6 +21,10 @@ commands:
     usage: /teambal [top]
     aliases: [tbal]
     permission: friendstools.teambal
+  speedrunreset:
+    description: Resets the speedrun worlds for everyone (used by the lobby NPC from the console)
+    usage: /speedrunreset [player]
+    permission: friendstools.speedrun.reset
   friendstools:
     description: Reloads the FriendsTools config
     usage: /friendstools reload
@@ -36,6 +40,9 @@ permissions:
   friendstools.teambal:
     description: Use /teambal
     default: true
+  friendstools.speedrun.reset:
+    description: Reset the speedrun worlds (the NPC runs it from the console, so players don't need this)
+    default: op
   friendstools.admin:
     description: Reload the config
     default: op

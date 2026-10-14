@@ -33,6 +33,11 @@ public final class FriendsTools extends JavaPlugin {
             biomeCmd.setTabCompleter(biome);
         }
 
+        // Speedrun world reset (run by the lobby NPC)
+        SpeedrunReset speedrun = new SpeedrunReset(this);
+        getServer().getPluginManager().registerEvents(speedrun, this);
+        bind("speedrunreset", speedrun);
+
         // Weather fix
         getServer().getPluginManager().registerEvents(new WeatherFix(this), this);
 

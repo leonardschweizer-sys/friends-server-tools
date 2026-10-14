@@ -86,6 +86,25 @@ team-balance:
   # Recount all teams every X minutes (0 = only when someone closes the team ender chest)
   recount-minutes: 10
 
+speedrun:
+  enabled: true
+  # The speedrun worlds. All of them are regenerated on reset (the overworld first).
+  worlds:
+    - speedrun
+    - speedrun_nether
+    - speedrun_the_end
+  # Players who are in the run get sent here before the reset
+  lobby-world: lobby
+  # Multiverse-Inventories group of the speedrun worlds. Its inventories, XP, beds, advancements
+  # and last locations are wiped on reset. Set to "" to keep them.
+  inventory-group: speedrun
+  # One new random seed for all speedrun worlds (like vanilla). false = a different seed per world
+  same-seed: true
+  # Players have to click the reset NPC twice within this many seconds (0 = no second click)
+  confirm-seconds: 10
+  # Minimum time between two resets
+  cooldown-seconds: 60
+
 weather-fix:
   # Re-sends the correct weather after joining and after changing worlds
   # (fixes rain from survival still showing in the lobby)
@@ -107,5 +126,14 @@ messages:
   teambal-top-header: "<gold>Richest teams</gold> <gray>(diamonds in team ender chest)"
   teambal-top-line: "<gray><rank>.</gray> <white><team></white> <aqua><amount></aqua>"
   teambal-unavailable: "<red>BetterTeams is not installed."
+  speedrun-confirm: "<yellow>Click again within <seconds> seconds to reset the speedrun world for everyone.</yellow> <gray>(<players> player(s) in the run right now)"
+  speedrun-resetting: "<gold><player></gold> <gray>is resetting the speedrun world...</gray>"
+  speedrun-evacuated: "<gray>The speedrun world is being reset, taking you to the lobby."
+  speedrun-ready: "<green>The new speedrun world is ready!</green> <gray>Seed: <white><seed></white> · join with</gray> <white>/speedrun</white>"
+  speedrun-failed: "<red>The speedrun reset failed. An admin needs to check the console."
+  speedrun-busy: "<red>The speedrun world is already being reset."
+  speedrun-cooldown: "<red>The speedrun world was just reset. Try again in <seconds>s."
+  speedrun-closed: "<red>The speedrun world is being reset right now. Try again in a moment."
+  speedrun-disabled: "<red>Speedrun resets are turned off."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."

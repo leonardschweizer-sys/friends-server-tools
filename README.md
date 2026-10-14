@@ -10,6 +10,7 @@ Small Paper plugin for our 26.3 friends server.
 | `/biome <name>` | Changes the biome of the whole chunk you stand in (full height) for 32 diamonds. Survival only. Every overworld biome the server knows can be picked (new ones from updates, like 26.3's dappled forest, appear automatically); cave biomes are blocked. Grass, foliage and water colors update immediately. If you don't have enough diamonds: "You don't have enough diamonds to do this right now." | `friendstools.biome` (everyone) |
 | `/teambal` (`/tbal`) | Shows how many diamonds are in your BetterTeams team ender chest. Diamond blocks count as 9; diamonds inside shulker boxes and bundles (also bundles inside shulkers or other bundles) count too. | `friendstools.teambal` (everyone) |
 | `/teambal top` | Top 10 teams by diamonds. | same |
+| `/speedrunreset [player]` | Resets the shared speedrun run for everyone: sends everyone in the run to the lobby, wipes the speedrun inventory group (Multiverse-Inventories), then regenerates `speedrun`, `speedrun_nether` and `speedrun_the_end` with one new random seed. Players must click twice within 10 s; 60 s cooldown between resets. Meant for a lobby NPC: `console_command speedrunreset {player}`. Needs Multiverse `confirm-mode: disable_console`. | `friendstools.speedrun.reset` (op; the NPC runs it from the console) |
 | `/friendstools reload` | Reloads `config.yml`. | `friendstools.admin` (op) |
 
 Also:
