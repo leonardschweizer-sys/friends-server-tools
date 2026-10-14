@@ -14,6 +14,7 @@ Small Paper plugin for our 26.3 friends server.
 | `/friendstools reload` | Reloads `config.yml`. | `friendstools.admin` (op) |
 
 Also:
+- **Speedrun chat:** deaths and advancements in the speedrun worlds are only shown to players in the run (not in global chat or on Discord). `speedrun.run-only-messages`.
 - **Fishing-rod pearl stasis:** cast a rod onto a wooden or weighted pressure plate and an invisible armor stand keeps the plate pressed, even when Paper removes the bobber (nether portal, other world, logging out). Using any fishing rod again, from anywhere, removes it and fires the stasis. One link per player, survival worlds only (`stasis.worlds`). Links are saved in `plugins/FriendsTools/stasis.json`.
 - The diamond count is written into BetterTeams' own team money, so `/team baltop` and team info show it too. It updates whenever someone closes the team ender chest, and every 10 minutes.
 - **Weather fix:** re-sends the correct weather after joining and after changing worlds, so rain from survival no longer sticks in the lobby.

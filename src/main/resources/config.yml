@@ -104,6 +104,9 @@ speedrun:
   confirm-seconds: 10
   # Minimum time between two resets
   cooldown-seconds: 60
+  # Death and advancement messages from the speedrun worlds are only shown to players in the run,
+  # not in global chat and not on Discord
+  run-only-messages: true
 
 stasis:
   # A fishing bobber resting on a wooden or weighted pressure plate becomes a lasting link: an invisible

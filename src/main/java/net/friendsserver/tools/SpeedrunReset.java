@@ -10,6 +10,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import net.kyori.adventure.text.Component;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.scheduler.BukkitTask;
@@ -241,6 +244,44 @@ final class SpeedrunReset implements Listener, CommandExecutor {
         }
         event.setCancelled(true);
         plugin.messages().send(event.getPlayer(), "speedrun-closed");
+    }
+
+    // ------------------------------------------------------------------ run-only chat
+
+    /** Deaths in the speedrun worlds are only shown to players in the run (not global chat, not Discord). */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDeath(PlayerDeathEvent event) {
+        if (!privateMessages() || !isRunWorld(event.getEntity().getWorld())) {
+            return;
+        }
+        Component message = event.deathMessage();
+        event.deathMessage(null); // null = no broadcast, and DiscordSRV skips it
+        sendToRun(message);
+    }
+
+    /** Same for advancements made in the speedrun worlds. */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onAdvancement(PlayerAdvancementDoneEvent event) {
+        if (!privateMessages() || !isRunWorld(event.getPlayer().getWorld())) {
+            return;
+        }
+        Component message = event.message();
+        event.message(null);
+        sendToRun(message);
+    }
+
+    private boolean privateMessages() {
+        return plugin.getConfig().getBoolean("speedrun.run-only-messages", true);
+    }
+
+    private void sendToRun(Component message) {
+        if (message == null) {
+            return;
+        }
+        for (Player player : playersInRun()) {
+            player.sendMessage(message);
+        }
+        Bukkit.getConsoleSender().sendMessage(Component.text("[Speedrun] ").append(message));
     }
 
     // ------------------------------------------------------------------ helpers
