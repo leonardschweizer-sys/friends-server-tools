@@ -278,7 +278,9 @@ final class SpeedrunReset implements Listener, CommandExecutor {
         }
         Component message = event.message();
         event.message(null);
-        sendToRun(message);
+        if (!Fixes.isMvInvMarker(message)) { // re-granted by Multiverse-Inventories, not a real advancement
+            sendToRun(message);
+        }
     }
 
     private boolean privateMessages() {

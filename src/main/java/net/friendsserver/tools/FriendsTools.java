@@ -43,6 +43,9 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(stasis, this);
         stasis.start();
 
+        // Dismount on logout (cushions), hide Multiverse-Inventories' "mvinv:suppressed" chat line
+        getServer().getPluginManager().registerEvents(new Fixes(this), this);
+
         // Weather fix
         getServer().getPluginManager().registerEvents(new WeatherFix(this), this);
 

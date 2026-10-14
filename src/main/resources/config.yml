@@ -118,6 +118,14 @@ stasis:
     - world_nether
     - world_the_end
 
+fixes:
+  # Get players off cushions, boats, horses etc. when they log out. Otherwise the vehicle is respawned
+  # in the lobby at their survival coordinates on the next join (cushions break, horses end up in the lobby).
+  dismount-on-quit: true
+  # Multiverse-Inventories re-grants advancements when you change world group and labels them
+  # "mvinv:suppressed", which Paper then shows in chat. This hides that line.
+  hide-mvinv-suppressed: true
+
 weather-fix:
   # Re-sends the correct weather after joining and after changing worlds
   # (fixes rain from survival still showing in the lobby)
