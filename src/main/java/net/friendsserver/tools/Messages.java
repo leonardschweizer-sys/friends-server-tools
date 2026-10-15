@@ -28,20 +28,25 @@ final class Messages {
      * @param pairs placeholder name/value pairs, e.g. "cost", "32"
      */
     void send(CommandSender to, String key, String... pairs) {
-        to.sendMessage(render(key, true, pairs));
+        to.sendMessage(render(key, true, TagResolver.empty(), pairs));
+    }
+
+    /** Same, with an extra placeholder that keeps its own formatting (e.g. a colored ping). */
+    void send(CommandSender to, String key, TagResolver extra, String... pairs) {
+        to.sendMessage(render(key, true, extra, pairs));
     }
 
     /** Sends a message with the prefix to every online player and the console. */
     void broadcast(String key, String... pairs) {
-        Bukkit.getServer().broadcast(render(key, true, pairs));
+        Bukkit.getServer().broadcast(render(key, true, TagResolver.empty(), pairs));
     }
 
     /** Sends a message without the prefix (used for list lines). */
     void sendRaw(CommandSender to, String key, String... pairs) {
-        to.sendMessage(render(key, false, pairs));
+        to.sendMessage(render(key, false, TagResolver.empty(), pairs));
     }
 
-    private Component render(String key, boolean withPrefix, String... pairs) {
+    private Component render(String key, boolean withPrefix, TagResolver extra, String... pairs) {
         FileConfiguration cfg = plugin.getConfig();
         // No explicit default here, so keys missing from an older config.yml fall back to the jar's config.yml
         String text = cfg.getString("messages." + key);
@@ -49,6 +54,7 @@ final class Messages {
             text = key;
         }
         List<TagResolver> resolvers = new ArrayList<>();
+        resolvers.add(extra);
         for (int i = 0; i + 1 < pairs.length; i += 2) {
             // unparsed = player names / items can't inject formatting
             resolvers.add(Placeholder.unparsed(pairs[i], pairs[i + 1]));

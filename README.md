@@ -11,6 +11,7 @@ Small Paper plugin for our 26.3 friends server.
 | `/teambal` (`/tbal`) | Shows how many diamonds are in your BetterTeams team ender chest. Diamond blocks count as 9; diamonds inside shulker boxes and bundles (also bundles inside shulkers or other bundles) count too. | `friendstools.teambal` (everyone) |
 | `/teambal top` | Top 10 teams by diamonds. | same |
 | `/speedrunreset [player]` | Resets the shared speedrun run for everyone: sends everyone in the run to the lobby, wipes the speedrun inventory group (Multiverse-Inventories), then regenerates `speedrun`, `speedrun_nether` and `speedrun_the_end` with one new random seed. Players must click twice within 10 s; 60 s cooldown between resets. No global message: only the player who reset sees the progress and the new seed, and players in the run are told why they were sent to the lobby. Meant for a lobby NPC: `console_command speedrunreset {player}`. Needs Multiverse `confirm-mode: disable_console`. | `friendstools.speedrun.reset` (op; the NPC runs it from the console) |
+| `/ping [player]` | Your own ping, or another online player's, in green/yellow/red. | `friendstools.ping` (everyone) |
 | `/friendstools reload` | Reloads `config.yml`. | `friendstools.admin` (op) |
 
 Also:

@@ -111,11 +111,8 @@ final class TabList implements Listener {
 
         Component result = prefix.append(Component.text(player.getName(), color)).append(suffix);
         if (plugin.getConfig().getBoolean("tab.show-ping", true)) {
-            int ping = player.getPing();
-            NamedTextColor pingColor = ping < 80 ? NamedTextColor.GREEN
-                    : ping < 150 ? NamedTextColor.YELLOW : NamedTextColor.RED;
             result = result.append(Component.text(" [", NamedTextColor.GRAY))
-                    .append(Component.text(ping + "ms", pingColor))
+                    .append(PingCommand.pingComponent(player.getPing()))
                     .append(Component.text("]", NamedTextColor.GRAY));
         }
         return result;
