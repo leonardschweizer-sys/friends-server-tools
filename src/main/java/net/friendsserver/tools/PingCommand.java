@@ -9,13 +9,23 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Locale;
 
-/** /ping shows your own ping, /ping <player> shows someone else's. */
-final class PingCommand implements CommandExecutor, TabCompleter {
+/**
+ * /ping shows your own ping, /ping <player> shows someone else's.
+ *
+ * <p>EssentialsX also has a /ping (it only answers "Pong!" or echoes what you type) and gets the plain
+ * /ping label, so typed /ping commands are redirected to /friendstools:ping before any plugin sees them.</p>
+ */
+final class PingCommand implements CommandExecutor, TabCompleter, Listener {
 
     private final FriendsTools plugin;
 
@@ -50,6 +60,32 @@ final class PingCommand implements CommandExecutor, TabCompleter {
         msg.send(sender, "ping-other", Placeholder.component("ping", pingComponent(target.getPing())),
                 "player", target.getName());
         return true;
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+        String rewritten = redirect(event.getMessage().substring(1));
+        if (rewritten != null) {
+            event.setMessage("/" + rewritten);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onConsoleCommand(ServerCommandEvent event) {
+        String command = event.getCommand().startsWith("/") ? event.getCommand().substring(1) : event.getCommand();
+        String rewritten = redirect(command);
+        if (rewritten != null) {
+            event.setCommand(rewritten);
+        }
+    }
+
+    /** "ping" or "ping Steve" -> "friendstools:ping ...", anything else -> null. */
+    private static String redirect(String command) {
+        String lower = command.toLowerCase(Locale.ROOT);
+        if (lower.equals("ping") || lower.startsWith("ping ")) {
+            return "friendstools:ping" + command.substring(4);
+        }
+        return null;
     }
 
     @Override

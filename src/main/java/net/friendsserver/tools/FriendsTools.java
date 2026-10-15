@@ -51,7 +51,9 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WeatherFix(this), this);
 
         // /ping [player]
-        bind("ping", new PingCommand(this));
+        PingCommand ping = new PingCommand(this);
+        bind("ping", ping);
+        getServer().getPluginManager().registerEvents(ping, this);
 
         // Tab list: team tag + name + ping
         tabList = new TabList(this);
