@@ -14,10 +14,11 @@ Small Paper plugin for our 26.3 friends server.
 | `/friendstools reload` | Reloads `config.yml`. | `friendstools.admin` (op) |
 
 Also:
+- **Tab list:** team tag (BetterTeams prefix and color) + name + ping in green/yellow/red. Replaces TabListPing, whose custom tab names hid the team tags. Stays off while TabListPing is installed. `tab.*` in the config.
 - **Logout on a cushion/vehicle:** players get off cushions, boats, horses and minecarts when they log out, so the vehicle stays where it was instead of being respawned in the lobby at their survival coordinates on the next join.
 - **"mvinv:suppressed" in chat:** Multiverse-Inventories labels advancements it re-grants during a world-group change with that text, and Paper broadcast it. FriendsTools removes the message.
 - **Speedrun chat:** deaths and advancements in the speedrun worlds are only shown to players in the run (not in global chat or on Discord). `speedrun.run-only-messages`.
-- **Fishing-rod pearl stasis:** cast a rod onto a wooden or weighted pressure plate and an invisible armor stand keeps the plate pressed, even when Paper removes the bobber (nether portal, other world, logging out). Using any fishing rod again, from anywhere, removes it and fires the stasis. One link per player, survival worlds only (`stasis.worlds`). Links are saved in `plugins/FriendsTools/stasis.json`.
+- **Fishing-rod pearl stasis:** cast a rod onto a wooden or weighted pressure plate and an invisible armor stand keeps the plate pressed, even when Paper removes the bobber (nether portal, other world, logging out). Using any fishing rod again, from anywhere, removes it (and any leftover bare invisible armor stand on that plate, e.g. from the old Paper Stasis Fixer plugin) and fires the stasis. One link per player, survival worlds only (`stasis.worlds`). Links are saved in `plugins/FriendsTools/stasis.json`.
 - The diamond count is written into BetterTeams' own team money, so `/team baltop` and team info show it too. It updates whenever someone closes the team ender chest, and every 10 minutes.
 - **Weather fix:** re-sends the correct weather after joining and after changing worlds, so rain from survival no longer sticks in the lobby.
 

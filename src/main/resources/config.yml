@@ -118,6 +118,12 @@ stasis:
     - world_nether
     - world_the_end
 
+tab:
+  # Tab list names: BetterTeams team tag + name in team color + [ping]. Replaces TabListPing, which hid team tags.
+  enabled: true
+  show-ping: true
+  update-seconds: 3
+
 fixes:
   # Get players off cushions, boats, horses etc. when they log out. Otherwise the vehicle is respawned
   # in the lobby at their survival coordinates on the next join (cushions break, horses end up in the lobby).

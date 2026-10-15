@@ -13,6 +13,7 @@ public final class FriendsTools extends JavaPlugin {
     private Messages messages;
     private ChestLog chestLog;
     private Object teamBalance; // TeamBalance, kept as Object so BetterTeams classes only load when present
+    private TabList tabList;
 
     @Override
     public void onEnable() {
@@ -49,6 +50,25 @@ public final class FriendsTools extends JavaPlugin {
         // Weather fix
         getServer().getPluginManager().registerEvents(new WeatherFix(this), this);
 
+        // Tab list: team tag + name + ping
+        tabList = new TabList(this);
+        getServer().getPluginManager().registerEvents(tabList, this);
+
+        // Runs once the server has finished starting, when every plugin is enabled
+        getServer().getScheduler().runTask(this, () -> {
+            if (getServer().getPluginManager().getPlugin("Paper_Stasis_Fixer") != null
+                    || getServer().getPluginManager().getPlugin("Paper-Stasis-Fixer") != null) {
+                getLogger().warning("Paper Stasis Fixer is installed. It puts its own armor stands on stasis plates"
+                        + " and breaks FriendsTools' stasis after a relog. Delete its jar.");
+            }
+            if (getServer().getPluginManager().isPluginEnabled("TabListPing")) {
+                getLogger().warning("TabListPing is installed. It overwrites tab names, which hides team tags."
+                        + " FriendsTools' tab list (team tag + ping) stays off until TabListPing is removed.");
+            } else {
+                tabList.start();
+            }
+        });
+
         // Team diamond balance (only when BetterTeams is installed)
         PluginCommand teamBalCmd = getCommand("teambal");
         if (getServer().getPluginManager().isPluginEnabled("BetterTeams")) {
@@ -76,6 +96,9 @@ public final class FriendsTools extends JavaPlugin {
         if (chestLog != null) {
             chestLog.saveNow();
         }
+        if (tabList != null) {
+            tabList.stop();
+        }
     }
 
     @Override
@@ -86,6 +109,9 @@ public final class FriendsTools extends JavaPlugin {
             reloadConfig();
             if (teamBalance instanceof TeamBalance tb) {
                 tb.start();
+            }
+            if (tabList != null && !getServer().getPluginManager().isPluginEnabled("TabListPing")) {
+                tabList.start();
             }
             messages.send(sender, "reloaded");
             return true;

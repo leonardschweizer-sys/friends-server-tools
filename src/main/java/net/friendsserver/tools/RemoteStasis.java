@@ -25,7 +25,10 @@ import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.io.IOException;
@@ -202,9 +205,8 @@ final class RemoteStasis implements Listener {
             return;
         }
         UUID standId = UUID.fromString(link.stand());
-        Entity loaded = Bukkit.getEntity(standId);
-        if (loaded != null) {
-            loaded.remove();
+        if (Bukkit.getEntity(standId) != null) {
+            clearPlate(world, link, player.getUniqueId(), standId);
             plugin.messages().send(player, "stasis-triggered");
             return;
         }
@@ -212,35 +214,70 @@ final class RemoteStasis implements Listener {
         world.getChunkAtAsync(link.x() >> 4, link.z() >> 4).thenAccept(chunk -> {
             chunk.addPluginChunkTicket(plugin);
             Bukkit.getScheduler().runTaskLater(plugin, () -> chunk.removePluginChunkTicket(plugin), CHUNK_HOLD_TICKS);
-            removeWhenLoaded(player.getUniqueId(), chunk, standId, 0);
+            removeWhenLoaded(player.getUniqueId(), chunk, link, standId, 0);
         });
     }
 
-    private void removeWhenLoaded(UUID playerId, Chunk chunk, UUID standId, int attempt) {
-        Entity stand = Bukkit.getEntity(standId);
-        if (stand == null) {
-            for (Entity e : chunk.getEntities()) {
-                if (e.getUniqueId().equals(standId) || playerId.toString().equals(ownerOf(e))) {
-                    stand = e;
-                    break;
-                }
-            }
-        }
+    private void removeWhenLoaded(UUID playerId, Chunk chunk, Link link, UUID standId, int attempt) {
         Player player = Bukkit.getPlayer(playerId);
-        if (stand != null) {
-            stand.remove();
+        if (chunk.isEntitiesLoaded() || Bukkit.getEntity(standId) != null) {
+            int removed = clearPlate(chunk.getWorld(), link, playerId, standId);
             if (player != null) {
-                plugin.messages().send(player, "stasis-triggered");
+                plugin.messages().send(player, removed > 0 ? "stasis-triggered" : "stasis-missing");
             }
             return;
         }
-        if (attempt >= 20) {
+        if (attempt >= 40) {
             if (player != null) {
                 plugin.messages().send(player, "stasis-missing");
             }
             return;
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> removeWhenLoaded(playerId, chunk, standId, attempt + 1), 5L);
+        Bukkit.getScheduler().runTaskLater(plugin,
+                () -> removeWhenLoaded(playerId, chunk, link, standId, attempt + 1), 5L);
+    }
+
+    /**
+     * Removes the player's armor stand, plus any other plain invisible armor stand standing in the same plate
+     * block that doesn't belong to another player's link (e.g. leftovers from the old Paper Stasis Fixer plugin,
+     * which would otherwise keep the plate pressed so the stasis never fires).
+     */
+    private int clearPlate(World world, Link link, UUID playerId, UUID standId) {
+        int removed = 0;
+        Entity own = Bukkit.getEntity(standId);
+        if (own != null) {
+            own.remove();
+            removed++;
+        }
+        BoundingBox box = new BoundingBox(link.x(), link.y(), link.z(), link.x() + 1, link.y() + 1, link.z() + 1);
+        for (Entity e : world.getNearbyEntities(box, e -> e instanceof ArmorStand)) {
+            ArmorStand stand = (ArmorStand) e;
+            String owner = ownerOf(stand);
+            boolean otherPlayersLink = owner != null && !owner.equals(playerId.toString());
+            Location at = stand.getLocation();
+            if (stand.isValid() && stand.isInvisible() && !otherPlayersLink && isBare(stand)
+                    && at.getBlockX() == link.x() && at.getBlockY() == link.y() && at.getBlockZ() == link.z()) {
+                stand.remove();
+                removed++;
+            }
+        }
+        if (removed > 1) {
+            plugin.getLogger().info("Removed " + removed + " invisible armor stands from the stasis plate at "
+                    + link.world() + " " + link.x() + " " + link.y() + " " + link.z());
+        }
+        return removed;
+    }
+
+    /** True if the armor stand holds and wears nothing (a helper stand, not a decoration). */
+    private static boolean isBare(ArmorStand stand) {
+        EntityEquipment eq = stand.getEquipment();
+        for (ItemStack item : new ItemStack[] {eq.getHelmet(), eq.getChestplate(), eq.getLeggings(), eq.getBoots(),
+                eq.getItemInMainHand(), eq.getItemInOffHand()}) {
+            if (item != null && !item.getType().isAir()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // ------------------------------------------------------------------ cleanup and protection
