@@ -250,8 +250,8 @@ final class RemoteStasis implements Listener {
             removed++;
         }
         BoundingBox box = new BoundingBox(link.x(), link.y(), link.z(), link.x() + 1, link.y() + 1, link.z() + 1);
-        for (Entity e : world.getNearbyEntities(box, e -> e instanceof ArmorStand)) {
-            ArmorStand stand = (ArmorStand) e;
+        for (Entity found : world.getNearbyEntities(box, candidate -> candidate instanceof ArmorStand)) {
+            ArmorStand stand = (ArmorStand) found;
             String owner = ownerOf(stand);
             boolean otherPlayersLink = owner != null && !owner.equals(playerId.toString());
             Location at = stand.getLocation();

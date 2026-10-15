@@ -2,6 +2,7 @@ package net.friendsserver.tools;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -92,7 +93,7 @@ final class TabList implements Listener {
     private Component build(Player player) {
         Component prefix = Component.empty();
         Component suffix = Component.empty();
-        NamedTextColor color = null;
+        TextColor color = null;
 
         Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
         Team team = board.getEntryTeam(player.getName());

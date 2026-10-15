@@ -25,7 +25,16 @@ jobs:
           gradle-version: current
 
       - name: Build
-        run: gradle build --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! gradle build --no-daemon --stacktrace 2>&1 | tee build.log; then
+            # Compiler errors as annotations, so they can be read without downloading the log
+            grep -E "\.java:[0-9]+: (error|warning):" build.log | head -30 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            exit 1
+          fi
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
