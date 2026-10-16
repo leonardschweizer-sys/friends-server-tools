@@ -54,7 +54,7 @@ final class DiscUpload implements CommandExecutor {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final Gson GSON = new Gson();
     private static final String CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; "
-            + "connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+            + "connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
     private final FriendsTools plugin;
     private final Map<String, Ticket> tickets = new ConcurrentHashMap<>();
@@ -245,6 +245,10 @@ final class DiscUpload implements CommandExecutor {
             String path = ex.getRequestURI().getPath();
             String method = ex.getRequestMethod();
 
+            if (path.equals("/bg.jpg") && method.equals("GET")) {
+                background(ex);
+                return;
+            }
             if (path.equals("/") && method.equals("GET")) {
                 html(ex, 200, page("Music discs", "<p>Type <b>/upload</b> in Minecraft to get your upload link.</p>"));
                 return;
@@ -489,44 +493,70 @@ final class DiscUpload implements CommandExecutor {
                 .replace("'", "&#39;");
     }
 
+    /** Page background: plugins/FriendsTools/web/background.jpg if it exists, otherwise the one in the jar. */
+    private void background(HttpExchange ex) throws IOException {
+        byte[] image = null;
+        Path custom = plugin.getDataFolder().toPath().resolve("web").resolve("background.jpg");
+        if (Files.isRegularFile(custom) && Files.size(custom) < 10L * 1024 * 1024) {
+            image = Files.readAllBytes(custom);
+        } else {
+            try (InputStream in = DiscUpload.class.getResourceAsStream("/web/background.jpg")) {
+                if (in != null) {
+                    image = in.readAllBytes();
+                }
+            }
+        }
+        if (image == null) {
+            text(ex, 404, "Not found");
+            return;
+        }
+        ex.getResponseHeaders().set("Cache-Control", "public, max-age=86400");
+        ex.getResponseHeaders().set("Content-Type", "image/jpeg");
+        ex.sendResponseHeaders(200, image.length);
+        try (OutputStream out = ex.getResponseBody()) {
+            out.write(image);
+        }
+    }
+
     // ------------------------------------------------------------------ pages
 
     private static final String STYLE = """
-            :root{--bg:#14161a;--card:#1d2026;--line:#2c3038;--text:#e8e9ec;--muted:#9aa0aa;--accent:#5fd38d;\
-            --accent-ink:#0d2a19;--bad:#ff7b72}
             *{box-sizing:border-box}
+            html{min-height:100%;background:#e89a3c url(/bg.jpg) center/cover no-repeat fixed}
             body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;\
-            background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-            main{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:14px;\
-            padding:28px 24px}
-            h1{margin:0 0 4px;font-size:22px}
-            p{margin:0 0 16px;color:var(--muted)}
-            b{color:var(--text)}
-            label{display:block;font-size:14px;color:var(--muted);margin:16px 0 6px}
-            .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;\
-            min-height:120px;padding:16px;border:2px dashed var(--line);border-radius:10px;text-align:center;\
-            cursor:pointer;color:var(--muted)}
-            .drop.over,.drop:hover{border-color:var(--accent);color:var(--text)}
-            .drop strong{color:var(--text);word-break:break-all}
+            color:#000;font:16px/1.4 ui-monospace,Menlo,Consolas,"Courier New",monospace}
+            main{width:100%;max-width:460px;background:#fff;border:3px solid #000;box-shadow:8px 8px 0 #000}
+            h1{margin:0;padding:10px 14px;background:#000;color:#ffe600;font-size:18px;text-transform:uppercase;\
+            letter-spacing:.06em}
+            .in{padding:16px 14px}
+            p{margin:0 0 12px}
+            label{display:block;margin:16px 0 4px;font-size:13px;font-weight:700;text-transform:uppercase}
+            .drop{display:block;margin:0;padding:22px 12px;border:3px dashed #000;background:#eee;text-align:center;\
+            cursor:pointer}
+            .drop.over,.drop:hover{background:#ffe600}
+            .drop strong{display:block;margin-top:4px;word-break:break-all}
             input[type=file]{display:none}
-            input[type=text]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);\
-            background:var(--bg);color:var(--text);font:inherit}
-            input[type=text]:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-            button{width:100%;margin-top:20px;padding:12px;border:0;border-radius:8px;background:var(--accent);\
-            color:var(--accent-ink);font:600 16px system-ui,sans-serif;cursor:pointer}
-            button:disabled{opacity:.5;cursor:default}
-            .bar{height:8px;margin-top:16px;border-radius:4px;background:var(--line);overflow:hidden;display:none}
-            .bar div{height:100%;width:0;background:var(--accent);transition:width .2s}
-            #status{margin:12px 0 0;min-height:1.5em}
-            #status.bad{color:var(--bad)}
-            #status.good{color:var(--text)}
+            input[type=text]{width:100%;padding:9px 8px;border:3px solid #000;border-radius:0;background:#fff;\
+            color:#000;font:inherit}
+            input[type=text]:focus,button:focus-visible{outline:3px solid #ffe600;outline-offset:0}
+            button{width:100%;margin-top:18px;padding:12px;border:3px solid #000;border-radius:0;background:#8bd346;\
+            color:#000;font-family:inherit;font-size:16px;font-weight:700;text-transform:uppercase;cursor:pointer;\
+            box-shadow:4px 4px 0 #000}
+            button:active{transform:translate(4px,4px);box-shadow:none}
+            button:disabled{background:#bbb;color:#555;box-shadow:none;transform:none;cursor:default}
+            .bar{height:22px;margin-top:16px;border:3px solid #000;background:#fff;display:none}
+            .bar div{height:100%;width:0;background:repeating-linear-gradient(90deg,#000 0 12px,#8bd346 12px 16px)}
+            #status{margin:14px 0 0;padding:8px;border:3px solid #000;font-weight:700}
+            #status:empty{display:none}
+            #status.bad{background:#ff6b6b}
+            #status.good{background:#b9f27c}
             """;
 
     private static String page(String title, String body) {
         return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
                 + "<title>" + escape(title) + "</title><style>" + STYLE + "</style></head><body><main>"
-                + "<h1>" + escape(title) + "</h1>" + body + "</main></body></html>";
+                + "<h1>" + escape(title) + "</h1><div class=\"in\">" + body + "</div></main></body></html>";
     }
 
     private String uploadPage(Ticket t) {
@@ -534,7 +564,7 @@ final class DiscUpload implements CommandExecutor {
         String body = """
                 <p>For <b>%s</b>. An mp3, wav or flac file, up to %d MB.</p>
                 <label class="drop" id="drop" for="file">
-                  <span id="pick">Tap to choose a song, or drop it here</span>
+                  <span id="pick">[ Choose a song or drop it here ]</span>
                   <strong id="chosen"></strong>
                 </label>
                 <input type="file" id="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac">
@@ -574,7 +604,7 @@ final class DiscUpload implements CommandExecutor {
                     let r={};try{r=JSON.parse(x.responseText);}catch(e){}
                     if(x.status===200&&r.ok){
                       fill.style.width='100%%';
-                      say('Done! Back in Minecraft, hold a music disc and click the green message in chat.','good');
+                      say('DONE. Back in Minecraft: hold a music disc and click the green message in chat.','good');
                       go.textContent='Uploaded';
                     }else{
                       say(r.message||'Upload failed. Try again.','bad');go.disabled=false;
