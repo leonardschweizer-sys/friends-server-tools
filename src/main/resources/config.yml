@@ -180,6 +180,13 @@ disc-upload:
   max-size-mb: 50
   # How long an upload link works
   link-minutes: 15
+  # Free https (a padlock instead of "Not secure"): make a free name on https://www.duckdns.org, enter the server's
+  # IP there, and put the name and your DuckDNS token here. FriendsTools then gets a Let's Encrypt certificate for it
+  # (takes about a minute, http until then) and renews it by itself. With this set, "address" can stay empty.
+  duckdns-domain: ""   # e.g. "ourserver" for ourserver.duckdns.org
+  duckdns-token: ""
+  # true = Let's Encrypt test certificates (browsers don't trust them), only for trying it out
+  https-staging: false
 
 raids:
   # Captains that come with a raid wave drop an ominous bottle (vanilla only drops one outside raids),

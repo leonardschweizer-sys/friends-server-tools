@@ -3,6 +3,8 @@ package net.friendsserver.tools;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -56,12 +58,15 @@ final class DiscUpload implements CommandExecutor {
 
     private final FriendsTools plugin;
     private final Map<String, Ticket> tickets = new ConcurrentHashMap<>();
+    private final HttpsCertificates https;
     private HttpServer server;
     private ExecutorService executor;
     private int port = -1;
+    private boolean secure;
 
     DiscUpload(FriendsTools plugin) {
         this.plugin = plugin;
+        this.https = new HttpsCertificates(plugin);
     }
 
     // ------------------------------------------------------------------ web server lifecycle
@@ -80,8 +85,24 @@ final class DiscUpload implements CommandExecutor {
         if (System.getProperty("sun.net.httpserver.maxRspTime") == null) {
             System.setProperty("sun.net.httpserver.maxRspTime", "120");
         }
+        port = wanted;
+        // https with a DuckDNS name: a saved certificate is used right away, a new one switches over when ready
+        https.start(this::upgradeToHttps);
+        open(https.ready());
+    }
+
+    /** Opens the web server on the configured port, with or without TLS. */
+    private void open(boolean withTls) {
+        closeServer();
         try {
-            HttpServer http = HttpServer.create(new InetSocketAddress(wanted), 16);
+            HttpServer http;
+            if (withTls) {
+                HttpsServer tls = HttpsServer.create(new InetSocketAddress(port), 16);
+                tls.setHttpsConfigurator(new HttpsConfigurator(https.context()));
+                http = tls;
+            } else {
+                http = HttpServer.create(new InetSocketAddress(port), 16);
+            }
             ExecutorService threads = Executors.newFixedThreadPool(3, r -> {
                 Thread t = new Thread(r, "FriendsTools disc upload");
                 t.setDaemon(true);
@@ -92,17 +113,31 @@ final class DiscUpload implements CommandExecutor {
             http.start();
             server = http;
             executor = threads;
-            port = wanted;
+            secure = withTls;
             String base = baseUrl();
-            plugin.getLogger().info("Disc upload website is running on port " + wanted
-                    + (base == null ? ". Set disc-upload.address so /upload can make links." : ": " + base));
+            plugin.getLogger().info("Disc upload website is running on port " + port
+                    + (base == null ? ". Set disc-upload.address so /upload can make links." : ": " + base)
+                    + (!withTls && https.configured() ? " (http until the https certificate is ready)" : ""));
         } catch (IOException | RuntimeException e) {
-            plugin.getLogger().warning("Disc upload: could not open port " + wanted + " (" + e
+            plugin.getLogger().warning("Disc upload: could not open port " + port + " (" + e
                     + "). Is the port opened for this server and not used by something else?");
         }
     }
 
+    /** Main thread: the first certificate arrived, switch the website to https. */
+    private void upgradeToHttps() {
+        if (port > 0 && !secure && https.ready()) {
+            open(true);
+        }
+    }
+
     void stop() {
+        closeServer();
+        https.stop();
+        port = -1;
+    }
+
+    private void closeServer() {
         if (server != null) {
             server.stop(0);
             server = null;
@@ -111,12 +146,18 @@ final class DiscUpload implements CommandExecutor {
             executor.shutdownNow();
             executor = null;
         }
-        port = -1;
+        secure = false;
     }
 
-    /** "http://address:port", or the configured full URL, or null if no address is known. */
+    /** The website's address as players open it, or null if no address is known. */
     private String baseUrl() {
+        if (secure) {
+            return "https://" + https.domain() + ":" + port;
+        }
         String address = plugin.getConfig().getString("disc-upload.address", "");
+        if ((address == null || address.isBlank()) && https.configured()) {
+            address = https.domain();
+        }
         if (address == null || address.isBlank()) {
             address = Bukkit.getIp();
         }
