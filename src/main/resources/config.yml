@@ -174,8 +174,8 @@ disc-upload:
   enabled: true
   # 0 = website off
   port: 0
-  # The server's address as players type it in Minecraft, WITHOUT the port (IP or domain), e.g. "123.45.67.89".
-  # A full URL like "https://discs.example.com" is used as it is.
+  # Only needed WITHOUT DuckDNS: the server's address as players type it in Minecraft, WITHOUT the port
+  # (IP or domain), e.g. "123.45.67.89". A full URL like "https://discs.example.com" is used as it is.
   address: ""
   max-size-mb: 50
   # How long an upload link works

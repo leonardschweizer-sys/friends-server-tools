@@ -116,7 +116,7 @@ final class DiscUpload implements CommandExecutor {
             secure = withTls;
             String base = baseUrl();
             plugin.getLogger().info("Disc upload website is running on port " + port
-                    + (base == null ? ". Set disc-upload.address so /upload can make links." : ": " + base)
+                    + (base == null ? ". Set disc-upload.duckdns-domain (or address) so /upload can make links." : ": " + base)
                     + (!withTls && https.configured() ? " (http until the https certificate is ready)" : ""));
         } catch (IOException | RuntimeException e) {
             plugin.getLogger().warning("Disc upload: could not open port " + port + " (" + e
@@ -159,9 +159,9 @@ final class DiscUpload implements CommandExecutor {
             address = https.domain();
         }
         if (address == null || address.isBlank()) {
-            address = Bukkit.getIp();
+            address = Bukkit.getIp(); // server-ip from server.properties, often empty or 0.0.0.0
         }
-        if (address == null || address.isBlank()) {
+        if (address == null || address.isBlank() || !reachable(address.trim())) {
             return null;
         }
         address = address.trim();
@@ -169,6 +169,14 @@ final class DiscUpload implements CommandExecutor {
             return address.endsWith("/") ? address.substring(0, address.length() - 1) : address;
         }
         return "http://" + address + ":" + port;
+    }
+
+    /** 0.0.0.0, localhost and the like only work on the server itself, never as a link for players. */
+    private static boolean reachable(String address) {
+        String a = address.toLowerCase(java.util.Locale.ROOT);
+        return !(a.equals("0.0.0.0") || a.equals("::") || a.equals("[::]") || a.equals("localhost")
+                || a.startsWith("127.") || a.startsWith("http://0.0.0.0") || a.startsWith("http://127.")
+                || a.startsWith("http://localhost"));
     }
 
     private static Path musicData() {

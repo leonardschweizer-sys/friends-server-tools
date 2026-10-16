@@ -106,6 +106,10 @@ final class HttpsCertificates {
         subdomain = subdomain(configuredDomain);
         token = plugin.getConfig().getString("disc-upload.duckdns-token", "");
         if (configuredDomain == null || configuredDomain.isBlank()) {
+            if (token != null && !token.isBlank()) {
+                plugin.getLogger().warning("HTTPS: disc-upload.duckdns-token is set but duckdns-domain is empty."
+                        + " Put your DuckDNS name there (e.g. \"ourserver\" for ourserver.duckdns.org).");
+            }
             return;
         }
         if (subdomain.isEmpty() || token == null || token.isBlank()) {
