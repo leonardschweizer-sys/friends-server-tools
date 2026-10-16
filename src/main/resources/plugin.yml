@@ -29,6 +29,11 @@ commands:
     description: Turn PvP on or off for yourself (off by default)
     usage: /pvp [on|off]
     permission: friendstools.pvp
+  discupload:
+    description: Gives you a private link to upload a song (mp3, wav, flac) for a music disc
+    usage: /upload
+    aliases: [upload]
+    permission: friendstools.discupload
   login:
     description: Log in (cracked players)
     usage: /login <password>
@@ -76,6 +81,9 @@ permissions:
   friendstools.pvp.others:
     description: Set another player's PvP with /pvp <on|off> <player>
     default: op
+  friendstools.discupload:
+    description: Use /upload
+    default: true
   friendstools.auth.admin:
     description: Manage login accounts (/auth)
     default: op

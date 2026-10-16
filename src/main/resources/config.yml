@@ -166,6 +166,21 @@ death-heads:
   # Death message and date on the head
   lore: true
 
+disc-upload:
+  # /upload gives a player a private link to a small website where they upload an mp3, wav or flac file.
+  # It goes straight into plugins/CustomDiscs/musicdata, and a chat button burns it onto the disc in their hand.
+  # Songs stored on the server never break, unlike SoundCloud/YouTube discs.
+  # Needs its own port: open one in the Godlike panel under "Port & Domains", put it here, then /friendstools reload.
+  enabled: true
+  # 0 = website off
+  port: 0
+  # The server's address as players type it in Minecraft, WITHOUT the port (IP or domain), e.g. "123.45.67.89".
+  # A full URL like "https://discs.example.com" is used as it is.
+  address: ""
+  max-size-mb: 50
+  # How long an upload link works
+  link-minutes: 15
+
 raids:
   # Captains that come with a raid wave drop an ominous bottle (vanilla only drops one outside raids),
   # so raid farms can keep going
@@ -269,5 +284,11 @@ messages:
   pvp-blocked-pet: "<gray>This animal belongs to <white><player></white>, who has PvP off."
   pvp-usage: "<gray>Usage: <white>/pvp [on|off]</white>"
   pvp-disabled: "<red>/pvp is turned off on this server."
+  upload-link: "<gray>Upload a song (mp3, wav or flac, max <max> MB):</gray> <link> <dark_gray>(your private link, works for <minutes> min)"
+  upload-link-button: "<aqua><u>open the upload page</u></aqua>"
+  upload-done: "<green>Uploaded <white><name></white>!</green> <gray>Hold a music disc and</gray> <create>"
+  upload-create-button: "<green><u>click here to burn it</u></green>"
+  upload-off: "<red>The song upload website isn't set up yet."
+  upload-no-customdiscs: "<red>CustomDiscs isn't installed."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."

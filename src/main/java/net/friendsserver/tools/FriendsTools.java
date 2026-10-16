@@ -16,6 +16,7 @@ public final class FriendsTools extends JavaPlugin {
     private TabList tabList;
     private LoginManager login;
     private PvpManager pvp;
+    private DiscUpload discUpload;
 
     @Override
     public void onEnable() {
@@ -80,6 +81,11 @@ public final class FriendsTools extends JavaPlugin {
         // Every player death drops the player's head
         getServer().getPluginManager().registerEvents(new DeathHeads(this), this);
 
+        // /upload: small website to upload songs straight into CustomDiscs
+        discUpload = new DiscUpload(this);
+        bind("discupload", discUpload);
+        discUpload.start();
+
         // Runs once the server has finished starting, when every plugin is enabled
         getServer().getScheduler().runTask(this, () -> {
             if (getServer().getPluginManager().getPlugin("Paper_Stasis_Fixer") != null
@@ -131,6 +137,9 @@ public final class FriendsTools extends JavaPlugin {
         if (pvp != null) {
             pvp.stop();
         }
+        if (discUpload != null) {
+            discUpload.stop();
+        }
     }
 
     @Override
@@ -147,6 +156,9 @@ public final class FriendsTools extends JavaPlugin {
             }
             if (pvp != null) {
                 pvp.reload();
+            }
+            if (discUpload != null) {
+                discUpload.start();
             }
             messages.send(sender, "reloaded");
             return true;
