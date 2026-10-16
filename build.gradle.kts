@@ -3,11 +3,12 @@ plugins {
 }
 
 group = "net.friendsserver"
-version = "1.3.2"
+version = "1.4.0"
 
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.codemc.io/repository/maven-releases/")
 }
 
 // Compile-only stand-ins for the few BetterTeams classes we call.
@@ -20,6 +21,8 @@ dependencies {
     compileOnly(paperApi)
     "stubsCompileOnly"(paperApi)
     compileOnly(stubs.output)
+    // Only used for the Mojang login check; the server already has the PacketEvents plugin
+    compileOnly("com.github.retrooper:packetevents-spigot:2.14.0")
 }
 
 tasks.withType<JavaCompile>().configureEach {

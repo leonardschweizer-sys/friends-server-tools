@@ -14,6 +14,7 @@ public final class FriendsTools extends JavaPlugin {
     private ChestLog chestLog;
     private Object teamBalance; // TeamBalance, kept as Object so BetterTeams classes only load when present
     private TabList tabList;
+    private LoginManager login;
 
     @Override
     public void onEnable() {
@@ -45,7 +46,17 @@ public final class FriendsTools extends JavaPlugin {
         stasis.start();
 
         // Dismount on logout (cushions), hide Multiverse-Inventories' "mvinv:suppressed" chat line
-        getServer().getPluginManager().registerEvents(new Fixes(this), this);
+        Fixes fixes = new Fixes(this);
+        getServer().getPluginManager().registerEvents(fixes, this);
+        fixes.applyAttributeSwapping();
+
+        // Login system for offline mode (cracked players), keeps everyone's existing IDs
+        login = new LoginManager(this);
+        getServer().getPluginManager().registerEvents(login, this);
+        for (String name : List.of("login", "register", "changepassword", "premium", "auth")) {
+            bind(name, login);
+        }
+        login.start();
 
         // Weather fix
         getServer().getPluginManager().registerEvents(new WeatherFix(this), this);
@@ -103,6 +114,9 @@ public final class FriendsTools extends JavaPlugin {
         }
         if (tabList != null) {
             tabList.stop();
+        }
+        if (login != null) {
+            login.stop();
         }
     }
 

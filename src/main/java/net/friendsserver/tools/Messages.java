@@ -36,6 +36,11 @@ final class Messages {
         to.sendMessage(render(key, true, extra, pairs));
     }
 
+    /** A message as a Component without the prefix (kick screens). */
+    Component component(String key, String... pairs) {
+        return render(key, false, TagResolver.empty(), pairs);
+    }
+
     /** Sends a message with the prefix to every online player and the console. */
     void broadcast(String key, String... pairs) {
         Bukkit.getServer().broadcast(render(key, true, TagResolver.empty(), pairs));

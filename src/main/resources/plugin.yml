@@ -3,7 +3,7 @@ version: '${version}'
 main: net.friendsserver.tools.FriendsTools
 api-version: '1.21'
 description: Chest log, biome changer, team diamond balance, speedrun reset and small fixes for our server
-softdepend: [BetterTeams]
+softdepend: [BetterTeams, packetevents]
 
 commands:
   chestlog:
@@ -25,6 +25,25 @@ commands:
     description: Shows your ping or another player's ping
     usage: /ping [player]
     permission: friendstools.ping
+  login:
+    description: Log in (cracked players)
+    usage: /login <password>
+    aliases: [l]
+  register:
+    description: Set your password on your first join (cracked players)
+    usage: /register <password> <password>
+    aliases: [reg]
+  changepassword:
+    description: Change your password
+    usage: /changepassword <old> <new>
+    aliases: [changepw]
+  premium:
+    description: Protect your name with your Mojang account (checked on every join)
+    usage: /premium
+  auth:
+    description: Login admin commands
+    usage: /auth <list|info|setpassword|unregister|protect|unprotect>
+    permission: friendstools.auth.admin
   speedrunreset:
     description: Resets the speedrun worlds for everyone (used by the lobby NPC from the console)
     usage: /speedrunreset [player]
@@ -47,6 +66,9 @@ permissions:
   friendstools.ping:
     description: Use /ping and /ping <player>
     default: true
+  friendstools.auth.admin:
+    description: Manage login accounts (/auth)
+    default: op
   friendstools.speedrun.reset:
     description: Reset the speedrun worlds (the NPC runs it from the console, so players don't need this)
     default: op

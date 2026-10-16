@@ -124,7 +124,35 @@ tab:
   show-ping: true
   update-seconds: 3
 
+login:
+  # Login system for offline mode, so cracked players can join without risk for everyone else.
+  # While online-mode=true it only remembers every player who joins as a protected name.
+  # - Everyone who played before keeps exactly the same ID (inventory, advancements, teams, ranks).
+  # - Protected names (all existing players, and anyone who uses /premium) must pass Mojang's login
+  #   check on every join, so a cracked client can't use them. No password needed.
+  # - Cracked players must be on the whitelist and set a password with /register on their first join.
+  enabled: true
+  # The Mojang check for protected names (needs PacketEvents). If it ever breaks, set this to false:
+  # protected players then log in with a password instead (first /register only from their last known IP,
+  # or an admin sets one with /auth setpassword).
+  premium-verification: true
+  # Seconds a player has to /login or /register before being kicked
+  timeout-seconds: 90
+  # Same IP logs in automatically for this many days (0 = always ask for the password)
+  session-days: 30
+  min-password-length: 6
+  # Wrong passwords before a kick
+  max-attempts: 5
+
+raids:
+  # Captains that come with a raid wave drop an ominous bottle (vanilla only drops one outside raids),
+  # so raid farms can keep going
+  captain-drops-ominous-bottle: true
+
 fixes:
+  # Turns attribute swapping back on (Paper's unsupported-settings.update-equipment-on-player-actions: false).
+  # Applied right away and written to config/paper-global.yml.
+  attribute-swapping: true
   # Get players off cushions, boats, horses etc. when they log out. Otherwise the vehicle is respawned
   # in the lobby at their survival coordinates on the next join (cushions break, horses end up in the lobby).
   dismount-on-quit: true
@@ -170,5 +198,42 @@ messages:
   ping-other: "<gray><white><player></white>'s ping:</gray> <ping>"
   ping-not-online: "<red><white><player></white> is not online."
   ping-usage: "<gray>Usage: <white>/ping [player]</white>"
+  login-please-register: "<yellow>Welcome! Set your password: <white>/register <password> <password></white>"
+  login-please-login: "<yellow>Please log in: <white>/login <password></white>"
+  login-please-login-first: "<red>Log in first: <white>/login <password></white> (or <white>/register</white> on your first visit)."
+  login-register-usage: "<gray>Usage: <white>/register <password> <password></white>"
+  login-login-usage: "<gray>Usage: <white>/login <password></white>"
+  login-changepassword-usage: "<gray>Usage: <white>/changepassword <old> <new></white>"
+  login-passwords-differ: "<red>The two passwords are not the same."
+  login-password-short: "<red>The password needs at least <min> characters."
+  login-registered: "<green>Password set, you're logged in. Next time on this IP it happens automatically."
+  login-success: "<green>Logged in."
+  login-auto: "<gray>Logged in automatically (same IP)."
+  login-wrong: "<red>Wrong password. <gray>(<left> tries left)"
+  login-already-registered: "<red>You already have a password. Use <white>/login <password></white>."
+  login-already-logged-in: "<gray>You're already logged in."
+  login-no-password: "<red>Only for logged-in players with a password."
+  login-password-changed: "<green>Password changed."
+  login-disabled: "<red>The login system is turned off."
+  login-no-permission: "<red>You don't have permission to do that."
+  login-premium-online-mode: "<gray>The server is in online mode right now, Mojang checks everyone already."
+  login-premium-already: "<gray>Your name is already protected by your Mojang account."
+  login-premium-explain: "<yellow>Only do this if your name is a real (paid) Minecraft account and you own it. From your next join the server checks your Mojang login, so nobody with a cracked client can use your name. You keep your progress. If you're sure: <white>/premium confirm</white>"
+  login-premium-not-found: "<red><white><player></white> is not a Mojang account name, so it can't be protected."
+  login-premium-done: "<green>Done. Your name is now protected by your Mojang account. Rejoin with the official launcher account."
+  login-auth-usage: "<gray>/auth list | info <name> | setpassword <name> <password> | unregister <name> | protect <name> | unprotect <name>"
+  login-auth-list: "<gold>Protected:</gold> <white><protected></white><newline><gold>Cracked:</gold> <white><cracked></white>"
+  login-auth-info: "<gold><player></gold> <gray>ID <white><uuid></white> · <white><type></white> · password: <white><password></white>"
+  login-auth-unknown: "<red>No account for <white><player></white>."
+  login-auth-done: "<green>Done."
+  login-auth-set-password-first: "<red>Set a password for this player first (/auth setpassword), otherwise anyone could take the name."
+  login-kick-protected: "<red>This name is protected.</red><newline><gray>Join with the official Minecraft account of <white><player></white>."
+  login-kick-wrong-account: "<red>This name belongs to a different Minecraft account on this server."
+  login-kick-check-unavailable: "<red>Protected names can't be checked right now.</red><newline><gray>Tell an admin (PacketEvents is missing)."
+  login-kick-needs-password: "<red>This name is protected and needs a password right now.</red><newline><gray>Ask an admin to set one for you."
+  login-kick-already-online: "<red>A player with this name is already online."
+  login-kick-lockdown: "<red>Logins are locked because the account list could not be read.</red><newline><gray>Tell an admin."
+  login-kick-timeout: "<red>You did not log in in time."
+  login-kick-attempts: "<red>Too many wrong passwords."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."
