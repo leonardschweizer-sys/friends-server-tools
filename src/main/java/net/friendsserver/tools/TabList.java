@@ -21,6 +21,8 @@ import java.util.UUID;
 /**
  * Tab list names with the BetterTeams team tag and the player's ping.
  *
+ * <p>Players with PvP on get the PvP marker after their name.</p>
+ *
  * <p>As soon as any plugin sets a custom tab name (like TabListPing does for the ping), the game stops adding
  * the scoreboard-team prefix in the tab list, so team tags disappear. This builds the whole name itself:
  * team prefix + name in the team color + team suffix + [ping].</p>
@@ -76,6 +78,13 @@ final class TabList implements Listener {
         lastSent.remove(event.getPlayer().getUniqueId());
     }
 
+    /** Updates everyone's tab name right away (e.g. after /pvp), if the tab list is running. */
+    void refresh() {
+        if (task != null) {
+            updateAll();
+        }
+    }
+
     private void updateAll() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             update(player);
@@ -110,6 +119,11 @@ final class TabList implements Listener {
         }
 
         Component result = prefix.append(Component.text(player.getName(), color)).append(suffix);
+        PvpManager pvp = plugin.pvp();
+        Component marker = pvp == null ? null : pvp.markerFor(player, true);
+        if (marker != null) {
+            result = result.append(Component.space()).append(marker);
+        }
         if (plugin.getConfig().getBoolean("tab.show-ping", true)) {
             result = result.append(Component.text(" [", NamedTextColor.GRAY))
                     .append(PingCommand.pingComponent(player.getPing()))

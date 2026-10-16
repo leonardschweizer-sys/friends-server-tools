@@ -2,7 +2,7 @@ name: FriendsTools
 version: '${version}'
 main: net.friendsserver.tools.FriendsTools
 api-version: '1.21'
-description: Chest log, biome changer, team diamond balance, speedrun reset and small fixes for our server
+description: Chest log, biome changer, team diamond balance, speedrun reset, /pvp, death heads, login and small fixes for our server
 softdepend: [BetterTeams, packetevents]
 
 commands:
@@ -25,6 +25,10 @@ commands:
     description: Shows your ping or another player's ping
     usage: /ping [player]
     permission: friendstools.ping
+  pvp:
+    description: Turn PvP on or off for yourself (off by default)
+    usage: /pvp [on|off]
+    permission: friendstools.pvp
   login:
     description: Log in (cracked players)
     usage: /login <password>
@@ -66,6 +70,12 @@ permissions:
   friendstools.ping:
     description: Use /ping and /ping <player>
     default: true
+  friendstools.pvp:
+    description: Use /pvp
+    default: true
+  friendstools.pvp.others:
+    description: Set another player's PvP with /pvp <on|off> <player>
+    default: op
   friendstools.auth.admin:
     description: Manage login accounts (/auth)
     default: op

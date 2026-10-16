@@ -46,6 +46,11 @@ final class Messages {
         Bukkit.getServer().broadcast(render(key, true, TagResolver.empty(), pairs));
     }
 
+    /** Shows a message above the hotbar, without the prefix. */
+    void actionBar(org.bukkit.entity.Player to, String key, String... pairs) {
+        to.sendActionBar(render(key, false, TagResolver.empty(), pairs));
+    }
+
     /** Sends a message without the prefix (used for list lines). */
     void sendRaw(CommandSender to, String key, String... pairs) {
         to.sendMessage(render(key, false, TagResolver.empty(), pairs));

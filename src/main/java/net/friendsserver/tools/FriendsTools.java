@@ -15,6 +15,7 @@ public final class FriendsTools extends JavaPlugin {
     private Object teamBalance; // TeamBalance, kept as Object so BetterTeams classes only load when present
     private TabList tabList;
     private LoginManager login;
+    private PvpManager pvp;
 
     @Override
     public void onEnable() {
@@ -66,9 +67,18 @@ public final class FriendsTools extends JavaPlugin {
         bind("ping", ping);
         getServer().getPluginManager().registerEvents(ping, this);
 
-        // Tab list: team tag + name + ping
+        // Tab list: team tag + name + PvP marker + ping
         tabList = new TabList(this);
         getServer().getPluginManager().registerEvents(tabList, this);
+
+        // /pvp: off by default, both players need it on (also for arrows, potions, wolves...), marker next to names
+        pvp = new PvpManager(this);
+        getServer().getPluginManager().registerEvents(pvp, this);
+        bind("pvp", pvp);
+        pvp.start();
+
+        // Every player death drops the player's head
+        getServer().getPluginManager().registerEvents(new DeathHeads(this), this);
 
         // Runs once the server has finished starting, when every plugin is enabled
         getServer().getScheduler().runTask(this, () -> {
@@ -118,6 +128,9 @@ public final class FriendsTools extends JavaPlugin {
         if (login != null) {
             login.stop();
         }
+        if (pvp != null) {
+            pvp.stop();
+        }
     }
 
     @Override
@@ -131,6 +144,9 @@ public final class FriendsTools extends JavaPlugin {
             }
             if (tabList != null && !getServer().getPluginManager().isPluginEnabled("TabListPing")) {
                 tabList.start();
+            }
+            if (pvp != null) {
+                pvp.reload();
             }
             messages.send(sender, "reloaded");
             return true;
@@ -146,6 +162,17 @@ public final class FriendsTools extends JavaPlugin {
 
     Messages messages() {
         return messages;
+    }
+
+    PvpManager pvp() {
+        return pvp;
+    }
+
+    /** Updates the tab names right away (after /pvp). */
+    void refreshTab() {
+        if (tabList != null) {
+            tabList.refresh();
+        }
     }
 
     private void bind(String name, Object handler) {

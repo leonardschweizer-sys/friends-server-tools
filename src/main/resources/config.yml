@@ -144,6 +144,28 @@ login:
   # Wrong passwords before a kick
   max-attempts: 5
 
+pvp:
+  # /pvp: everyone decides for themselves. Off by default (only the name is shown).
+  # Two players can only hurt each other when BOTH have PvP on. That covers hits, arrows, tridents and other
+  # projectiles, splash and lingering potions (healing potions still work), tamed wolves, fire aspect/flame,
+  # TNT they lit, end crystals, channeling lightning, and knockback from wind charges, maces and fishing rods.
+  enabled: true
+  # Tamed animals (dogs, cats, horses...) of a player with PvP off can't be hurt by other players either
+  protect-pets: true
+  # After a PvP hit (given or taken) PvP can't be turned off for this many seconds
+  combat-seconds: 30
+  # Shown next to the name of players with PvP on (MiniMessage)
+  marker: "<red>⚔</red>"
+  marker-in-tab: true
+  # Also above the head, after the team tag and name (needs PacketEvents)
+  marker-above-head: true
+
+death-heads:
+  # Every player death drops the player's head, also with keepInventory
+  enabled: true
+  # Death message and date on the head
+  lore: true
+
 raids:
   # Captains that come with a raid wave drop an ominous bottle (vanilla only drops one outside raids),
   # so raid farms can keep going
@@ -235,5 +257,17 @@ messages:
   login-kick-lockdown: "<red>Logins are locked because the account list could not be read.</red><newline><gray>Tell an admin."
   login-kick-timeout: "<red>You did not log in in time."
   login-kick-attempts: "<red>Too many wrong passwords."
+  pvp-on: "<red>⚔ PvP is on.</red> <gray>You can fight everyone who has PvP on too. <white>/pvp</white> turns it off."
+  pvp-off: "<green>PvP is off.</green> <gray>Nobody can hurt you or your pets: no hits, arrows, potions or dogs."
+  pvp-already-on: "<gray>Your PvP is already on. <white>/pvp off</white> turns it off."
+  pvp-already-off: "<gray>Your PvP is already off. <white>/pvp on</white> turns it on."
+  pvp-in-combat: "<red>You were just in a fight. You can turn PvP off in <seconds>s."
+  pvp-other-on: "<gray>PvP of <white><player></white> is now <red>on</red>."
+  pvp-other-off: "<gray>PvP of <white><player></white> is now <green>off</green>."
+  pvp-blocked-self: "<gray>Your PvP is off. <white>/pvp</white> to turn it on."
+  pvp-blocked-other: "<white><player></white> <gray>has PvP off."
+  pvp-blocked-pet: "<gray>This animal belongs to <white><player></white>, who has PvP off."
+  pvp-usage: "<gray>Usage: <white>/pvp [on|off]</white>"
+  pvp-disabled: "<red>/pvp is turned off on this server."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."
