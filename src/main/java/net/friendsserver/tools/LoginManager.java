@@ -106,6 +106,10 @@ final class LoginManager implements Listener, CommandExecutor, TabCompleter {
             onlineNames.add(Accounts.key(p.getName()));
         }
         if (!enabled()) {
+            if (!Bukkit.getOnlineMode()) {
+                plugin.getLogger().severe("Login: offline mode with login.enabled: false. Known players get NEW IDs"
+                        + " (empty inventories) and anyone can use any name. Turn it back on!");
+            }
             return;
         }
         try {
