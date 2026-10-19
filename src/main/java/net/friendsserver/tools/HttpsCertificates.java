@@ -137,7 +137,16 @@ final class HttpsCertificates {
             t.setDaemon(true);
             return t;
         });
-        worker.scheduleWithFixedDelay(this::check, 5, 12 * 60 * 60, TimeUnit.SECONDS);
+        worker.schedule(this::cycle, 5, TimeUnit.SECONDS);
+    }
+
+    /** One check, then the next one is planned: one chain only, so failures never pile up into parallel retries. */
+    private void cycle() {
+        long hours = check();
+        ScheduledExecutorService w = worker;
+        if (w != null && !w.isShutdown()) {
+            w.schedule(this::cycle, hours, TimeUnit.HOURS);
+        }
     }
 
     void stop() {
@@ -169,11 +178,15 @@ final class HttpsCertificates {
         }
     }
 
-    /** Runs on the worker thread: get a certificate if there is none, or renew it when it's due. */
-    private void check() {
+    /**
+     * Runs on the worker thread: get a certificate if there is none, or renew it when it's due.
+     *
+     * @return hours until the next check
+     */
+    private long check() {
         X509Certificate cert = current;
         if (cert != null && TlsSupport.covers(cert, domain) && !TlsSupport.needsRenewal(cert, Instant.now())) {
-            return;
+            return 12;
         }
         boolean first = !ready();
         try {
@@ -181,15 +194,28 @@ final class HttpsCertificates {
             if (first && onFirstCertificate != null) {
                 Bukkit.getScheduler().runTask(plugin, onFirstCertificate);
             }
+            return 12;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            return 12;
+        } catch (DuckDnsRefused e) {
+            // Wrong name/token: retrying won't help until the config is fixed (a reload starts over right away)
+            plugin.getLogger().warning("HTTPS: DuckDNS answered \"KO\": the token doesn't belong to "
+                    + subdomain + ".duckdns.org. Copy both again from duckdns.org into disc-upload.duckdns-domain"
+                    + " and duckdns-token, then /friendstools reload." + (first ? " The upload website uses http"
+                    + " until then." : ""));
+            return 12;
         } catch (Exception e) {
             plugin.getLogger().warning("HTTPS: getting the certificate for " + domain + " failed: " + safe(e)
                     + ". Trying again in an hour." + (first ? " The upload website uses http until then." : ""));
-            ScheduledExecutorService w = worker;
-            if (w != null && !w.isShutdown()) {
-                w.schedule(this::check, 1, TimeUnit.HOURS);
-            }
+            return 1;
+        }
+    }
+
+    /** DuckDNS said "KO": name and token don't match. */
+    private static final class DuckDnsRefused extends IOException {
+        DuckDnsRefused() {
+            super("DuckDNS refused the update (KO)");
         }
     }
 
@@ -224,14 +250,20 @@ final class HttpsCertificates {
 
     /** The TXT record through DuckDNS' update API (it answers it for _acme-challenge.yourname.duckdns.org too). */
     private final class DuckDnsTxt implements AcmeClient.DnsTxt {
+        private boolean isSet;
+
         @Override
         public void set(String value) throws IOException, InterruptedException {
             call("&txt=" + URLEncoder.encode(value, StandardCharsets.UTF_8));
+            isSet = true;
         }
 
         @Override
         public void clear() throws IOException, InterruptedException {
-            call("&txt=removed&clear=true");
+            if (isSet) {
+                call("&txt=removed&clear=true");
+                isSet = false;
+            }
         }
 
         private void call(String params) throws IOException, InterruptedException {
@@ -240,9 +272,12 @@ final class HttpsCertificates {
             HttpResponse<String> resp = HTTP.send(HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(30)).GET()
                     .build(), HttpResponse.BodyHandlers.ofString());
             String body = resp.body() == null ? "" : resp.body().trim();
+            if (body.startsWith("KO")) {
+                throw new DuckDnsRefused();
+            }
             if (resp.statusCode() != 200 || !body.startsWith("OK")) {
-                throw new IOException("DuckDNS refused the update (answer \"" + (body.startsWith("KO") ? "KO" : body)
-                        + "\"). Check disc-upload.duckdns-domain and duckdns-token.");
+                throw new IOException("DuckDNS answered " + resp.statusCode() + " \""
+                        + body.substring(0, Math.min(40, body.length())) + "\"");
             }
         }
     }

@@ -21,6 +21,7 @@ Small Paper plugin for our 26.3 friends server.
 | `/friendstools reload` | Reloads `config.yml`. | `friendstools.admin` (op) |
 
 Also:
+- **Server texture pack:** `plugins/FriendsTools/pack.zip` is served by the upload website at `/pack.zip` and offered to everyone on join (`resource-pack.*`). Replace the file and `/friendstools reload` to update it.
 - **Death heads:** every player death drops that player's head (with the death message and date), also with keepInventory.
 - **PvP marker above heads:** shown through PacketEvents with a separate copy of the player's team (same tag and color) on each client; the server's scoreboard and BetterTeams are not touched. Without PacketEvents the marker only shows in the tab list. PvP settings are saved in `plugins/FriendsTools/pvp.json`.
 - **Login system (offline mode):** lets cracked players join without risk for everyone else. Everyone who played before keeps exactly the same ID, so inventories, advancements, teams and ranks stay. Their names are protected: joining with them needs Mojang's login check (done through PacketEvents), so a cracked client can't use them. Cracked players must be whitelisted (`/whitelist add <name>` works by name) and use a password. Until logged in they can't move, chat, use commands, items or voice chat. A known name is never let in with a different ID; if the check can't run, the join is refused. Accounts are in `plugins/FriendsTools/accounts.json`. Does nothing in online mode except remember players.

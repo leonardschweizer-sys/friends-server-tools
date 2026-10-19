@@ -147,11 +147,11 @@ final class RemoteStasis implements Listener {
                 castAt.remove(id);
                 continue;
             }
-            if (!hook.isValid() || !hook.isOnGround()) {
+            if (!hook.isValid() || !(hook.isOnGround() || hook.getVelocity().lengthSquared() < 0.0004)) {
                 continue;
             }
-            Block block = hook.getLocation().getBlock();
-            if (!isBobberPlate(block.getType()) || !allowedWorld(block.getWorld())) {
+            Block block = pressedPlate(hook);
+            if (block == null || !allowedWorld(block.getWorld())) {
                 continue;
             }
             Player player = Bukkit.getPlayer(id);
@@ -164,6 +164,46 @@ final class RemoteStasis implements Listener {
             castAt.remove(id);
             link(player, block);
         }
+    }
+
+    /**
+     * The wooden or weighted pressure plate this bobber presses, found the way the game does it: the bobber's hitbox
+     * touches the plate's trigger area. Checking only the block at the bobber's centre missed bobbers that landed
+     * near the edge of a plate, which pressed it but sat partly over the next block.
+     */
+    private Block pressedPlate(FishHook hook) {
+        BoundingBox box = hook.getBoundingBox();
+        World world = hook.getWorld();
+        int minX = (int) Math.floor(box.getMinX());
+        int maxX = (int) Math.floor(box.getMaxX());
+        int minY = (int) Math.floor(box.getMinY() - 0.01);
+        int maxY = (int) Math.floor(box.getMaxY());
+        int minZ = (int) Math.floor(box.getMinZ());
+        int maxZ = (int) Math.floor(box.getMaxZ());
+        Block best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    Block block = world.getBlockAt(x, y, z);
+                    if (!isBobberPlate(block.getType())) {
+                        continue;
+                    }
+                    BoundingBox trigger = new BoundingBox(x + 0.0625, y, z + 0.0625, x + 0.9375, y + 0.25, z + 0.9375);
+                    if (!trigger.overlaps(box)) {
+                        continue;
+                    }
+                    double dx = x + 0.5 - box.getCenterX();
+                    double dz = z + 0.5 - box.getCenterZ();
+                    double distance = dx * dx + dz * dz;
+                    if (distance < bestDistance) {
+                        best = block;
+                        bestDistance = distance;
+                    }
+                }
+            }
+        }
+        return best;
     }
 
     private void link(Player player, Block plate) {

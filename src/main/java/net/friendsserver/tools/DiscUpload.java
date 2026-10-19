@@ -149,6 +149,11 @@ final class DiscUpload implements CommandExecutor {
         secure = false;
     }
 
+    /** The website's address if it is running (used for the resource pack link), else null. */
+    String publicBaseUrl() {
+        return server == null ? null : baseUrl();
+    }
+
     /** The website's address as players open it, or null if no address is known. */
     private String baseUrl() {
         if (secure) {
@@ -245,6 +250,20 @@ final class DiscUpload implements CommandExecutor {
             String path = ex.getRequestURI().getPath();
             String method = ex.getRequestMethod();
 
+            if (path.equals("/pack.zip") && method.equals("GET")) {
+                byte[] pack = plugin.serverPack() == null ? null : plugin.serverPack().bytes();
+                if (pack == null) {
+                    text(ex, 404, "Not found");
+                    return;
+                }
+                ex.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
+                ex.getResponseHeaders().set("Content-Type", "application/zip");
+                ex.sendResponseHeaders(200, pack.length);
+                try (OutputStream out = ex.getResponseBody()) {
+                    out.write(pack);
+                }
+                return;
+            }
             if (path.equals("/bg.jpg") && method.equals("GET")) {
                 background(ex);
                 return;

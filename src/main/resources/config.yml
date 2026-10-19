@@ -188,6 +188,16 @@ disc-upload:
   # true = Let's Encrypt test certificates (browsers don't trust them), only for trying it out
   https-staging: false
 
+resource-pack:
+  # Server texture pack: put the zip at plugins/FriendsTools/pack.zip. Everyone gets it offered when they join,
+  # so custom item textures work without anyone installing anything. It is served by the upload website, so
+  # disc-upload.port must be set. After replacing the file: /friendstools reload (online players get it right away).
+  enabled: true
+  file: pack.zip
+  # true = players who decline the pack are kicked
+  required: false
+  prompt: "<gray>Server textures: Broomstick trident, Who shot ya? bow"
+
 raids:
   # Captains that come with a raid wave drop an ominous bottle (vanilla only drops one outside raids),
   # so raid farms can keep going

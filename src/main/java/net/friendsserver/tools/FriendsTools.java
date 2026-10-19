@@ -17,6 +17,7 @@ public final class FriendsTools extends JavaPlugin {
     private LoginManager login;
     private PvpManager pvp;
     private DiscUpload discUpload;
+    private ServerPack serverPack;
 
     @Override
     public void onEnable() {
@@ -85,6 +86,11 @@ public final class FriendsTools extends JavaPlugin {
         discUpload = new DiscUpload(this);
         bind("discupload", discUpload);
         discUpload.start();
+
+        // Server texture pack (plugins/FriendsTools/pack.zip), served by the website, sent on join
+        serverPack = new ServerPack(this);
+        getServer().getPluginManager().registerEvents(serverPack, this);
+        serverPack.load();
 
         // Runs once the server has finished starting, when every plugin is enabled
         getServer().getScheduler().runTask(this, () -> {
@@ -160,6 +166,9 @@ public final class FriendsTools extends JavaPlugin {
             if (discUpload != null) {
                 discUpload.start();
             }
+            if (serverPack != null) {
+                serverPack.load();
+            }
             messages.send(sender, "reloaded");
             return true;
         }
@@ -178,6 +187,14 @@ public final class FriendsTools extends JavaPlugin {
 
     PvpManager pvp() {
         return pvp;
+    }
+
+    DiscUpload discUpload() {
+        return discUpload;
+    }
+
+    ServerPack serverPack() {
+        return serverPack;
     }
 
     /** Updates the tab names right away (after /pvp). */
