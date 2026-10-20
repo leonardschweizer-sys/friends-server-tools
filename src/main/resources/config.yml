@@ -479,6 +479,8 @@ advancements:
     items: true
     trophies: true
     xp: true
+    # BACAP co-op mode: when one player gets an advancement, everyone online gets it too
+    coop: false
   # Prize items from custom-items go to everyone who completes their advancement
   prize-items: true
   # After coming into survival, advancements granted in this time are Multiverse-Inventories putting them back

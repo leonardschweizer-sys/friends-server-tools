@@ -15,7 +15,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Objective;
@@ -56,6 +59,7 @@ final class AdvancementGate implements Listener {
     private final Map<UUID, Set<String>> rewarded = new HashMap<>();
     private final Set<UUID> seeded = new HashSet<>();
     private final Map<UUID, Integer> quietUntil = new HashMap<>();
+    private final Map<UUID, int[]> burst = new HashMap<>(); // {tick, completions in that tick}
     private final Set<String> worlds = new HashSet<>();
     private File file;
     private boolean dirty;
@@ -65,6 +69,7 @@ final class AdvancementGate implements Listener {
     private boolean bacapItems;
     private boolean bacapTrophies;
     private boolean bacapXp;
+    private boolean bacapCoop;
     private boolean prizeItems;
     private int quietTicks;
     private BukkitTask saver;
@@ -86,6 +91,7 @@ final class AdvancementGate implements Listener {
         bacapItems = cfg.getBoolean("advancements.bacap-rewards.items", true);
         bacapTrophies = cfg.getBoolean("advancements.bacap-rewards.trophies", true);
         bacapXp = cfg.getBoolean("advancements.bacap-rewards.xp", true);
+        bacapCoop = cfg.getBoolean("advancements.bacap-rewards.coop", false);
         prizeItems = cfg.getBoolean("advancements.prize-items", true);
         quietTicks = Math.max(20, cfg.getInt("advancements.ignore-seconds-after-world-change", 3) * 20);
 
@@ -171,6 +177,16 @@ final class AdvancementGate implements Listener {
             return;
         }
         String key = adv.getKey().toString();
+        // many completions in one tick = advancements being put back (world change), never a real burst
+        int now = Bukkit.getCurrentTick();
+        int[] b = burst.computeIfAbsent(p.getUniqueId(), k -> new int[]{now, 0});
+        if (b[0] != now) {
+            b[0] = now;
+            b[1] = 0;
+        }
+        if (++b[1] > 3) {
+            quietUntil.put(p.getUniqueId(), now + quietTicks);
+        }
         boolean first = firstTime(p, key);
         if (rewardedOf(p).add(key)) {
             dirty = true;
@@ -187,7 +203,26 @@ final class AdvancementGate implements Listener {
         }
     }
 
+    // Multiverse-Inventories puts the advancements back inside its own world-change/join handlers, so the quiet
+    // time has to start before those run: when the teleport/respawn/login is decided, not after it.
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onTeleport(PlayerTeleportEvent event) {
+        if (event.getTo().getWorld() != null && event.getFrom().getWorld() != event.getTo().getWorld()
+                && counts(event.getTo().getWorld()) && !counts(event.getFrom().getWorld())) {
+            quiet(event.getPlayer());
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
+    public void onRespawn(PlayerRespawnEvent event) {
+        World to = event.getRespawnLocation().getWorld();
+        if (to != null && to != event.getPlayer().getWorld() && counts(to) && !counts(event.getPlayer().getWorld())) {
+            quiet(event.getPlayer());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player p = event.getPlayer();
         if (counts(p.getWorld()) && !counts(event.getFrom())) {
@@ -195,7 +230,12 @@ final class AdvancementGate implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onLogin(PlayerLoginEvent event) {
+        quiet(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
         quiet(event.getPlayer());
     }
@@ -203,6 +243,7 @@ final class AdvancementGate implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         quietUntil.remove(event.getPlayer().getUniqueId());
+        burst.remove(event.getPlayer().getUniqueId());
     }
 
     /**
@@ -211,7 +252,11 @@ final class AdvancementGate implements Listener {
      * everything they already have counts as rewarded, so old advancements never pay out again.
      */
     private void quiet(Player p) {
-        quietUntil.put(p.getUniqueId(), Bukkit.getCurrentTick() + quietTicks);
+        int until = Bukkit.getCurrentTick() + quietTicks;
+        if (quietUntil.getOrDefault(p.getUniqueId(), 0) >= until) {
+            return; // already quiet (login, join and teleport can come together)
+        }
+        quietUntil.put(p.getUniqueId(), until);
         Bukkit.getScheduler().runTaskLater(plugin, () -> seed(p), quietTicks + 20L);
     }
 
@@ -247,6 +292,8 @@ final class AdvancementGate implements Listener {
         set(settings, "reward", on && bacapItems ? 1 : 0);
         set(settings, "trophy", on && bacapTrophies ? 1 : 0);
         set(settings, "exp", on && bacapXp ? 1 : 0);
+        // BACAP co-op grants every advancement to everyone online; never for advancements being put back
+        set(settings, "coop", on && bacapCoop ? 1 : 0);
     }
 
     private static void set(Objective objective, String entry, int value) {
