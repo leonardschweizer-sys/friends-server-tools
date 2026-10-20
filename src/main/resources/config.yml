@@ -189,13 +189,16 @@ disc-upload:
   https-staging: false
 
 resource-pack:
-  # Server texture pack: put the zip at plugins/FriendsTools/pack.zip. Everyone gets it offered when they join,
-  # so custom item textures work without anyone installing anything. It is served by the upload website, so
-  # disc-upload.port must be set. After replacing the file: /friendstools reload (online players get it right away).
+  # Server texture pack: put the zip at plugins/FriendsTools/pack.zip. It is sent while players log in (in the loading
+  # screen, so it never reloads in front of them). It is served by the upload website, so disc-upload.port must be set.
+  # After replacing the file: /friendstools reload (online players get it right away).
   enabled: true
   file: pack.zip
-  # true = players who decline the pack are kicked
-  required: false
+  # true = the game asks again even players who once clicked "No" (otherwise their client never shows the pack again),
+  # and players who decline can't join. After accepting once, their client loads it without asking.
+  required: true
+  # How long a login waits for the pack to finish loading (slow internet), then they join anyway
+  wait-seconds: 90
   prompt: "<gray>Server textures: custom items and prizes"
 
 custom-items:
@@ -639,5 +642,6 @@ messages:
   title-taken: "<green>Took the title <white><name></white> from <white><player></white>."
   title-no-file: "<red>There are no titles yet (plugins/FriendsTools/titles.yml is missing)."
   nokia-saved: "<aqua>Your Nokia 3310 saved you!</aqua> <gray>It needs <white><minutes> min</white> to recharge."
+  pack-required-kick: "<red>This server needs its texture pack for the custom items.</red>\n\n<gray>Join again and click <white>Proceed</white>.\nOr: Multiplayer, select the server, <white>Edit</white>, <white>Server Resource Packs: Enabled</white>."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."
