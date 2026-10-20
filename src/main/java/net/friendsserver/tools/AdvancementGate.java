@@ -191,7 +191,14 @@ final class AdvancementGate implements Listener {
         if (rewardedOf(p).add(key)) {
             dirty = true;
         }
-        if (!first || !prizeItems) {
+        if (!first) {
+            return;
+        }
+        Titles titles = plugin.titles();
+        if (titles != null) {
+            titles.completed(p, key);
+        }
+        if (!prizeItems) {
             return;
         }
         for (CustomItems.Definition def : items.forAdvancement(key)) {
@@ -261,7 +268,15 @@ final class AdvancementGate implements Listener {
     }
 
     private void seed(Player p) {
-        if (!p.isOnline() || !counts(p.getWorld()) || seeded.contains(p.getUniqueId())) {
+        if (!p.isOnline() || !counts(p.getWorld())) {
+            return;
+        }
+        // titles for advancements the player already has (also ones from before titles existed)
+        Titles titles = plugin.titles();
+        if (titles != null) {
+            titles.sync(p);
+        }
+        if (seeded.contains(p.getUniqueId())) {
             return;
         }
         Set<String> set = rewardedOf(p);

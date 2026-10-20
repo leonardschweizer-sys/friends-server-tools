@@ -486,6 +486,20 @@ advancements:
   # After coming into survival, advancements granted in this time are Multiverse-Inventories putting them back
   ignore-seconds-after-world-change: 3
 
+titles:
+  # Titles come from plugins/FriendsTools/titles.yml (made with the planner). Everyone who completes an advancement in
+  # survival unlocks its title; "first" titles only go to the first player. /titles to pick one.
+  in-chat: true
+  in-tab: true
+  # Tell everyone when someone gets an only-once title
+  announce-only-once: true
+  # How the worn title looks in front of the name
+  badge: "<dark_gray>[</dark_gray><title><dark_gray>]</dark_gray> "
+  colors:
+    rank-1: "<green><title>"
+    rank-2: "<gold><title>"
+    only-once: "<gradient:#ff5555:#ffaa00><title></gradient>"
+
 prize-powers:
   # Nokia 3310: minutes until it can save you again
   totem-recharge-minutes: 10
@@ -612,6 +626,18 @@ messages:
   customitem-unknown: "<red>No prize item called <white><item></white>. <gray>/customitem list"
   customitem-given: "<green>Gave <white><item></white> to <white><player></white>."
   prize-item-awarded: "<gold>You got <item> <gold>for this advancement!"
+  title-unlocked: "<gold>New title:</gold> <title> <gray>(<white>/titles</white> to wear it)"
+  title-first-claimed: "<white><player></white> <yellow>is the first to complete</yellow> <advancement> <yellow>and gets the only-once title</yellow> <title><yellow>!"
+  title-synced: "<gray>You have <white><count></white> new titles from advancements you already made. <white>/titles</white> to wear one."
+  title-list: "<gray>Your titles <dark_gray>(<count> of <total>, page <page>/<pages>)</dark_gray>, click one to wear it, <white>/titles off</white> hides it:"
+  title-none: "<gray>No titles yet. Complete advancements in survival to earn them."
+  title-worn: "<gray>You now wear</gray> <title>"
+  title-off: "<gray>You don't wear a title now."
+  title-unknown: "<red>You don't have a title called <white><name></white>. <gray>/titles shows yours."
+  title-only-once-header: "<gray>Only-once titles <dark_gray>(who has them)</dark_gray>:"
+  title-given: "<green>Gave the title <white><name></white> to <white><player></white>."
+  title-taken: "<green>Took the title <white><name></white> from <white><player></white>."
+  title-no-file: "<red>There are no titles yet (plugins/FriendsTools/titles.yml is missing)."
   nokia-saved: "<aqua>Your Nokia 3310 saved you!</aqua> <gray>It needs <white><minutes> min</white> to recharge."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."

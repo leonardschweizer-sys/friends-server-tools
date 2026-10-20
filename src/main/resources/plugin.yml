@@ -34,6 +34,10 @@ commands:
     usage: /upload
     aliases: [upload]
     permission: friendstools.discupload
+  titles:
+    description: Pick the title you wear (from advancements), /titles only-once shows who has the rare ones
+    usage: /titles [page|<title>|off|only-once]
+    permission: friendstools.title
   customitem:
     description: Gives prize items (for testing), /ci list shows their numbers
     usage: /customitem <number|name|all|list> or /customitem give <player> <number|name|all>
@@ -89,6 +93,12 @@ permissions:
   friendstools.discupload:
     description: Use /upload
     default: true
+  friendstools.title:
+    description: Use /titles
+    default: true
+  friendstools.title.admin:
+    description: Give or take titles with /titles give|take <player> <title>
+    default: op
   friendstools.customitem:
     description: Give prize items with /customitem (/ci)
     default: op

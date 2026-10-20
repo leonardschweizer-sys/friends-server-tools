@@ -119,6 +119,12 @@ final class TabList implements Listener {
         }
 
         Component result = prefix.append(Component.text(player.getName(), color)).append(suffix);
+        Titles titles = plugin.titles();
+        Component badge = titles == null || !plugin.getConfig().getBoolean("titles.in-tab", true) ? null
+                : titles.badge(player);
+        if (badge != null) {
+            result = badge.append(result);
+        }
         PvpManager pvp = plugin.pvp();
         Component marker = pvp == null ? null : pvp.markerFor(player, true);
         if (marker != null) {

@@ -21,6 +21,7 @@ public final class FriendsTools extends JavaPlugin {
     private CustomItems customItems;
     private BuffGolems buffGolems;
     private AdvancementGate advancementGate;
+    private Titles titles;
 
     @Override
     public void onEnable() {
@@ -108,6 +109,12 @@ public final class FriendsTools extends JavaPlugin {
         // What some prize items do (Mjölnir lightning, Nokia totem, Nether Reactor Core look when placed)
         getServer().getPluginManager().registerEvents(new PrizePowers(this, customItems), this);
 
+        // Titles for advancements (titles.yml from the planner), shown in chat and the tab list, /titles
+        titles = new Titles(this);
+        titles.load();
+        getServer().getPluginManager().registerEvents(titles, this);
+        bind("titles", titles);
+
         // Advancements only count in survival, BACAP rewards once per player (not again on world changes)
         advancementGate = new AdvancementGate(this, customItems);
         getServer().getPluginManager().registerEvents(advancementGate, this);
@@ -173,6 +180,9 @@ public final class FriendsTools extends JavaPlugin {
         if (advancementGate != null) {
             advancementGate.stop();
         }
+        if (titles != null) {
+            titles.save();
+        }
     }
 
     @Override
@@ -202,9 +212,13 @@ public final class FriendsTools extends JavaPlugin {
             if (buffGolems != null) {
                 buffGolems.start();
             }
+            if (titles != null) {
+                titles.load();
+            }
             if (advancementGate != null) {
                 advancementGate.start();
             }
+            refreshTab();
             messages.send(sender, "reloaded");
             return true;
         }
@@ -231,6 +245,10 @@ public final class FriendsTools extends JavaPlugin {
 
     ServerPack serverPack() {
         return serverPack;
+    }
+
+    Titles titles() {
+        return titles;
     }
 
     /** Updates the tab names right away (after /pvp). */
