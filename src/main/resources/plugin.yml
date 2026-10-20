@@ -35,9 +35,9 @@ commands:
     aliases: [upload]
     permission: friendstools.discupload
   customitem:
-    description: Gives one of the only-once prize items
-    usage: /customitem <give <player> <item>|list>
-    aliases: [citem]
+    description: Gives prize items (for testing), /ci list shows their numbers
+    usage: /customitem <number|name|all|list> or /customitem give <player> <number|name|all>
+    aliases: [citem, ci]
     permission: friendstools.customitem
   login:
     description: Log in (cracked players)
@@ -90,7 +90,7 @@ permissions:
     description: Use /upload
     default: true
   friendstools.customitem:
-    description: Give prize items with /customitem
+    description: Give prize items with /customitem (/ci)
     default: op
   friendstools.auth.admin:
     description: Manage login accounts (/auth)

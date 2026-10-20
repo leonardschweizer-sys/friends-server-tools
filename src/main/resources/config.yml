@@ -199,25 +199,30 @@ resource-pack:
   prompt: "<gray>Server textures: custom items and prizes"
 
 custom-items:
-  # One-of-a-kind prizes (only-once advancements). Their look comes from pack.zip through a hidden item model,
-  # so naming a normal item the same in an anvil does nothing. Give one with /customitem give <player> <id>.
+  # Prize items for advancements: everyone who gets the advancement can get one (only titles are first-player-only).
+  # Their look comes from pack.zip through a hidden item model, so naming a normal item the same in an anvil does
+  # nothing. Testing: /ci <number> gives it to you, /ci all gives all of them, /ci list shows the numbers,
+  # /ci give <player> <number|name|all>.
   #   material: the item it is (best tier)      model: look from pack.zip
   #   worn: look when worn (helmets, elytras)  on-head: wear it and show its 3D model on the head (hats)
   #   enchantments: comes with these           golem: spawns a prize golem with this rig from pack.zip
   #   ability: lightning | reusable_totem      placed-model: keeps its look when placed as a block
-  #   for: advancement shown in the lore
+  #   for: advancement shown in the lore         number: short number for /ci
   bulldozer_drill:
+    number: 1
     material: NETHERITE_PICKAXE
     model: friends:bulldozer_drill
     name: "<gradient:#d8d0e0:#6e5a78>Bulldozer Drill</gradient>"
     for: "Bulldozer"
   phantom_wings:
+    number: 2
     material: ELYTRA
     model: friends:phantom_wings
     worn: friends:phantom_wings
     name: "<#8fa3ff>Phantom Wings"
     for: "Caves & Cliffs"
   susus_gigantus:
+    number: 3
     material: IRON_GOLEM_SPAWN_EGG
     golem: susus_gigantus
     name: "<red>Susus Gigantus"
@@ -226,27 +231,32 @@ custom-items:
       - "<gray>If it dies, it drops this egg again."
     for: "sus"
   wardenbane:
+    number: 4
     material: MACE
     model: friends:wardenbane
     name: "<#2ad4d4>Wardenbane"
     for: "Warden Extinction"
   dragon_wings:
+    number: 5
     material: ELYTRA
     model: friends:dragon_wings
     worn: friends:dragon_wings
     name: "<#b04cff>Dragon Wings"
     for: "At the Rim of the Sky"
   frying_pan:
+    number: 6
     material: MACE
     model: friends:frying_pan
     name: "<#c8c8c8>Frying Pan"
     for: "The Next Generation"
   dragonslayer:
+    number: 7
     material: NETHERITE_SWORD
     model: friends:dragonslayer
     name: "<#9a9aa6>Dragonslayer"
     for: "Free the End"
   icarus_wings:
+    number: 8
     material: ELYTRA
     model: friends:icarus_wings
     worn: friends:icarus_wings
@@ -255,39 +265,46 @@ custom-items:
       - "<gray>Invisible when you wear them."
     for: "Ad Astra"
   dragonborn_wings:
+    number: 9
     material: ELYTRA
     model: friends:dragon_wings
     worn: friends:dragon_wings
     name: "<#b04cff>Dragonborn Wings"
     for: "Dragon vs Dragon II: Electric Boogaloo"
   lightsaber:
+    number: 10
     material: NETHERITE_SWORD
     model: friends:lightsaber
     name: "<#e8e8ff>Lightsaber"
     for: "Constellation"
   halo:
+    number: 11
     material: NETHERITE_HELMET
     model: friends:halo
     on-head: true
     name: "<#ffe14d>Martyr's Halo"
     for: "Death From All"
   kite_shield:
+    number: 12
     material: SHIELD
     model: friends:kite_shield
     name: "<#6db8ff>Kite Shield"
     for: "Dragon Army"
   black_crown:
+    number: 13
     material: NETHERITE_HELMET
     model: friends:black_crown
     worn: friends:black_crown
     name: "<#5a5560>Black Crown"
     for: "Dragon vs Wither: The Pre-Sequel"
   end_scythe:
+    number: 14
     material: MACE
     model: friends:end_scythe
     name: "<#c9a0ff>End Scythe"
     for: "Endergeddon"
   oiia_compass:
+    number: 15
     material: RECOVERY_COMPASS
     model: friends:oiia_compass
     name: "<#e0c080>Oiia Compass"
@@ -295,33 +312,39 @@ custom-items:
       - "<gray>Points to where you last died."
     for: "Explorer of Worlds"
   terrarian_pickaxe:
+    number: 16
     material: NETHERITE_PICKAXE
     model: friends:terrarian_pickaxe
     name: "<gradient:#ff6ad5:#7a5cff>Terrarian Pickaxe</gradient>"
     for: "Farlander"
   heart_totem:
+    number: 17
     material: TOTEM_OF_UNDYING
     model: friends:heart_totem
     name: "<#ff4040>Heart Totem"
     for: "Global Vaccination"
   neptune_trident:
+    number: 18
     material: TRIDENT
     model: friends:neptune_trident
     name: "<#5fd3b0>Trident of Neptune"
     for: "Hearts of the Stack"
   pirate_hat:
+    number: 19
     material: NETHERITE_HELMET
     model: friends:pirate_hat
     worn: friends:pirate_hat
     name: "<#c0a060>Pirate King's Hat"
     for: "I am Loot!"
   space_helmet:
+    number: 20
     material: NETHERITE_HELMET
     model: friends:space_helmet
     worn: friends:space_helmet
     name: "<#bfe8ff>Space Helmet"
     for: "I'm in Space!"
   nokia:
+    number: 21
     material: TOTEM_OF_UNDYING
     model: friends:nokia
     ability: reusable_totem
@@ -331,6 +354,7 @@ custom-items:
       - "<gray>Needs to recharge after it saved you."
     for: "Immortal"
   mjolnir:
+    number: 22
     material: TRIDENT
     model: friends:mjolnir
     ability: lightning
@@ -342,38 +366,45 @@ custom-items:
       - "<gray>Calls down lightning on every hit, even without a storm."
     for: "Nuclear Fusion"
   warden_helmet:
+    number: 23
     material: NETHERITE_HELMET
     model: friends:warden_helmet
     on-head: true
     name: "<#1fb5c9>True Warden Helmet"
     for: "Overwarden"
   piglin_axe:
+    number: 24
     material: NETHERITE_AXE
     model: friends:piglin_axe
     name: "<#e8b04a>Piglin King's Axe"
     for: "Poglin!"
   camera:
+    number: 25
     material: SPYGLASS
     model: friends:camera
     name: "<#d0d0d0>Camera"
     for: "Telescopic"
   devil_pitchfork:
+    number: 26
     material: TRIDENT
     model: friends:devil_pitchfork
     name: "<#ff2a2a>Devil's Pitchfork"
     for: "The Devil's Distance"
   katana:
+    number: 27
     material: NETHERITE_SWORD
     model: friends:katana
     name: "<#f0d060>Katana"
     for: "The World Is Ending"
   wizard_hat:
+    number: 28
     material: NETHERITE_HELMET
     model: friends:wizard_hat
     on-head: true
     name: "<#9a6bff>Wizard Hat"
     for: "Ultimate Enchanter"
   nether_reactor:
+    number: 29
     material: BEACON
     model: friends:nether_reactor
     placed-model: true
@@ -382,16 +413,19 @@ custom-items:
       - "<gray>A beacon that keeps this look when placed."
     for: "Warlock"
   stormbreaker:
+    number: 30
     material: TRIDENT
     model: friends:stormbreaker
     name: "<#c8d4e0>Stormbreaker"
     for: "We're in the endgame now"
   anchor:
+    number: 31
     material: MACE
     model: friends:anchor
     name: "<#8aa0c0>Anchor"
     for: "Abyss Lord"
   plague_mask:
+    number: 32
     material: NETHERITE_HELMET
     model: friends:plague_mask
     on-head: true
@@ -516,8 +550,9 @@ messages:
   upload-create-button: "<green><u>click here to burn it</u></green>"
   upload-off: "<red>The song upload website isn't set up yet."
   upload-no-customdiscs: "<red>CustomDiscs isn't installed."
-  customitem-usage: "<gray>Usage: <white>/customitem give <player> <item></white> or <white>/customitem list</white>"
-  customitem-list: "<gray>Prize items: <white><items></white>"
+  customitem-usage: "<gray>Usage: <white>/ci <number|name|all></white>, <white>/ci give <player> <number|name|all></white> or <white>/ci list</white>"
+  customitem-list: "<gray>Prize items <dark_gray>(/ci <number> gives you one)</dark_gray>:"
+  customitem-list-line: "<gray><number></gray>  <name> <dark_gray>(<id>)"
   customitem-none: "<gray>No prize items are set up (custom-items in config.yml)."
   customitem-no-player: "<red><player> isn't online."
   customitem-unknown: "<red>No prize item called <white><item></white>. <gray>/customitem list"

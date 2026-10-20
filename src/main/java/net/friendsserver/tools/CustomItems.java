@@ -36,7 +36,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * One-of-a-kind items (the only-once advancement prizes). Their look comes from the server pack through the
+ * Prize items for advancements (everyone who gets the advancement can get one). Their look comes from the
+ * server pack through the
  * item_model component, which anvils, crafting and commands without op can't set, so naming a normal item
  * the same never gives it the texture. Every item carries its id, so the plugin knows the real ones.
  */
@@ -46,9 +47,9 @@ final class CustomItems implements TabExecutor {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH);
 
     /** One entry of custom-items in config.yml. */
-    record Definition(String id, Material material, Key model, Key worn, boolean onHead, String rig, String ability,
-                      boolean placedModel, Map<Key, Integer> enchantments, String name, List<String> lore,
-                      String forAdvancement) {
+    record Definition(String id, int number, Material material, Key model, Key worn, boolean onHead, String rig,
+                      String ability, boolean placedModel, Map<Key, Integer> enchantments, String name,
+                      List<String> lore, String forAdvancement) {
     }
 
     private final FriendsTools plugin;
@@ -56,6 +57,7 @@ final class CustomItems implements TabExecutor {
     private final NamespacedKey earnedByKey;
     private final NamespacedKey earnedAtKey;
     private final Map<String, Definition> definitions = new LinkedHashMap<>();
+    private final Map<Integer, Definition> byNumber = new java.util.TreeMap<>();
 
     CustomItems(FriendsTools plugin) {
         this.plugin = plugin;
@@ -66,6 +68,7 @@ final class CustomItems implements TabExecutor {
 
     void load() {
         definitions.clear();
+        byNumber.clear();
         ConfigurationSection all = plugin.getConfig().getConfigurationSection("custom-items");
         if (all == null) {
             return;
@@ -100,10 +103,20 @@ final class CustomItems implements TabExecutor {
                     }
                 }
             }
-            definitions.put(id.toLowerCase(Locale.ROOT), new Definition(id.toLowerCase(Locale.ROOT), material, model,
-                    worn, s.getBoolean("on-head", false), s.getString("golem"), s.getString("ability"),
+            // short number for /customitem; a missing or taken one gets the next free number
+            int number = s.getInt("number", 0);
+            if (number <= 0 || byNumber.containsKey(number)) {
+                number = 1;
+                while (byNumber.containsKey(number)) {
+                    number++;
+                }
+            }
+            Definition def = new Definition(id.toLowerCase(Locale.ROOT), number, material, model, worn,
+                    s.getBoolean("on-head", false), s.getString("golem"), s.getString("ability"),
                     s.getBoolean("placed-model", false), enchants, s.getString("name", id), s.getStringList("lore"),
-                    s.getString("for", "")));
+                    s.getString("for", ""));
+            definitions.put(def.id(), def);
+            byNumber.put(number, def);
         }
     }
 
@@ -119,8 +132,15 @@ final class CustomItems implements TabExecutor {
         }
     }
 
+    /** By id ("katana") or by number ("21"). */
     Definition definition(String id) {
-        return id == null ? null : definitions.get(id.toLowerCase(Locale.ROOT));
+        if (id == null) {
+            return null;
+        }
+        if (id.matches("\\d{1,6}")) {
+            return byNumber.get(Integer.parseInt(id));
+        }
+        return definitions.get(id.toLowerCase(Locale.ROOT));
     }
 
     /** The custom item id of a stack, or null for normal items. */
@@ -186,7 +206,7 @@ final class CustomItems implements TabExecutor {
             lore.add(plain(MM.deserialize(line)));
         }
         if (!def.forAdvancement().isBlank()) {
-            lore.add(plain(MM.deserialize("<dark_gray>Only-once prize: <for>",
+            lore.add(plain(MM.deserialize("<dark_gray>Reward for: <for>",
                     Placeholder.unparsed("for", def.forAdvancement()))));
         }
         if (!earnedBy.isBlank()) {
@@ -214,53 +234,83 @@ final class CustomItems implements TabExecutor {
         return LocalDate.now().format(DATE);
     }
 
-    // ---- /customitem give <player> <id> | list
+    // ---- /customitem [give <player>] <number|name|all>, /customitem list
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
                              @NotNull String[] args) {
         Messages msg = plugin.messages();
-        if (args.length >= 1 && args[0].equalsIgnoreCase("list")) {
+        if (args.length == 1 && args[0].equalsIgnoreCase("list")) {
             if (definitions.isEmpty()) {
                 msg.send(sender, "customitem-none");
-            } else {
-                msg.send(sender, "customitem-list", "items", String.join(", ", definitions.keySet()));
+                return true;
+            }
+            msg.send(sender, "customitem-list");
+            String line = plugin.getConfig().getString("messages.customitem-list-line",
+                    "<gray><number></gray>  <name> <dark_gray>(<id>)");
+            for (Definition def : byNumber.values()) {
+                sender.sendMessage(MM.deserialize(line, Placeholder.unparsed("number", String.valueOf(def.number())),
+                        Placeholder.component("name", MM.deserialize(def.name())), Placeholder.unparsed("id", def.id())));
             }
             return true;
         }
+        Player target;
+        String what;
         if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            Player target = Bukkit.getPlayerExact(args[1]);
+            target = Bukkit.getPlayerExact(args[1]);
+            what = args[2];
             if (target == null) {
                 msg.send(sender, "customitem-no-player", "player", args[1]);
                 return true;
             }
-            Definition def = definition(args[2]);
+        } else if (args.length == 1 && sender instanceof Player self) {
+            target = self;
+            what = args[0];
+        } else {
+            msg.send(sender, "customitem-usage");
+            return true;
+        }
+        List<Definition> give = new ArrayList<>();
+        if (what.equalsIgnoreCase("all")) {
+            give.addAll(byNumber.values());
+        } else {
+            Definition def = definition(what);
             if (def == null) {
-                msg.send(sender, "customitem-unknown", "item", args[2]);
+                msg.send(sender, "customitem-unknown", "item", what);
                 return true;
             }
+            give.add(def);
+        }
+        for (Definition def : give) {
             ItemStack item = create(def, target.getName(), today());
             target.getInventory().addItem(item).values()
                     .forEach(left -> target.getWorld().dropItemNaturally(target.getLocation(), left));
-            msg.send(sender, "customitem-given", "item", def.id(), "player", target.getName());
-            plugin.getLogger().info(sender.getName() + " gave custom item " + def.id() + " to " + target.getName());
-            return true;
         }
-        msg.send(sender, "customitem-usage");
+        String name = give.size() == 1 ? give.getFirst().id() : give.size() + " items";
+        msg.send(sender, "customitem-given", "item", name, "player", target.getName());
+        plugin.getLogger().info(sender.getName() + " gave " + name + " to " + target.getName());
         return true;
     }
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
                                       @NotNull String[] args) {
+        List<String> items = new ArrayList<>();
+        items.add("all");
+        byNumber.forEach((n, def) -> {
+            items.add(String.valueOf(n));
+            items.add(def.id());
+        });
         if (args.length == 1) {
-            return filter(List.of("give", "list"), args[0]);
+            List<String> first = new ArrayList<>(List.of("give", "list"));
+            first.addAll(items);
+            return filter(first, args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
             return filter(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList(), args[1]);
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            return filter(new ArrayList<>(definitions.keySet()), args[2]);
+            return filter(items, args[2]);
         }
         return List.of();
     }
