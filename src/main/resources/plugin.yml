@@ -2,7 +2,7 @@ name: FriendsTools
 version: '${version}'
 main: net.friendsserver.tools.FriendsTools
 api-version: '1.21'
-description: Chest log, biome changer, team diamond balance, speedrun reset, /pvp, death heads, login and small fixes for our server
+description: Chest log, biome changer, team diamond balance, speedrun reset, /pvp, death heads, prize items, login and small fixes for our server
 softdepend: [BetterTeams, packetevents]
 
 commands:
@@ -34,6 +34,11 @@ commands:
     usage: /upload
     aliases: [upload]
     permission: friendstools.discupload
+  customitem:
+    description: Gives one of the only-once prize items
+    usage: /customitem <give <player> <item>|list>
+    aliases: [citem]
+    permission: friendstools.customitem
   login:
     description: Log in (cracked players)
     usage: /login <password>
@@ -84,6 +89,9 @@ permissions:
   friendstools.discupload:
     description: Use /upload
     default: true
+  friendstools.customitem:
+    description: Give prize items with /customitem
+    default: op
   friendstools.auth.admin:
     description: Manage login accounts (/auth)
     default: op

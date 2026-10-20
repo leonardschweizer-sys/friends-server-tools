@@ -196,7 +196,53 @@ resource-pack:
   file: pack.zip
   # true = players who decline the pack are kicked
   required: false
-  prompt: "<gray>Server textures: Broomstick trident, Who shot ya? bow"
+  prompt: "<gray>Server textures: custom items and prizes"
+
+custom-items:
+  # One-of-a-kind prizes (only-once advancements). Their look comes from pack.zip through a hidden item model,
+  # so naming a normal item the same in an anvil does nothing. Give one with /customitem give <player> <id>.
+  #   material: the item it is (best tier), model: look from pack.zip, wings: elytra look when worn,
+  #   golem: spawns a prize golem with this rig from pack.zip, for: advancement shown in the lore
+  bulldozer_drill:
+    material: NETHERITE_PICKAXE
+    model: friends:bulldozer_drill
+    name: "<gradient:#d8d0e0:#6e5a78>Bulldozer Drill</gradient>"
+    for: "Bulldozer"
+  phantom_wings:
+    material: ELYTRA
+    model: friends:phantom_wings
+    wings: friends:phantom_wings
+    name: "<#8fa3ff>Phantom Wings"
+    for: "Caves & Cliffs"
+  susus_gigantus:
+    material: IRON_GOLEM_SPAWN_EGG
+    golem: susus_gigantus
+    name: "<red>Susus Gigantus"
+    lore:
+      - "<gray>Spawns a buff iron golem that guards your base."
+      - "<gray>If it dies, it drops this egg again."
+    for: "sus"
+  wardenbane:
+    material: MACE
+    model: friends:wardenbane
+    name: "<#2ad4d4>Wardenbane"
+    for: "Warden Extinction"
+  dragon_wings:
+    material: ELYTRA
+    model: friends:dragon_wings
+    wings: friends:dragon_wings
+    name: "<#b04cff>Dragon Wings"
+    for: "At the Rim of the Sky"
+  frying_pan:
+    material: MACE
+    model: friends:frying_pan
+    name: "<#c8c8c8>Frying Pan"
+    for: "The Next Generation"
+
+buff-golem:
+  # Prize golem stats (a normal iron golem has 100 health and 15 attack damage)
+  health: 200
+  attack-damage: 22
 
 raids:
   # Captains that come with a raid wave drop an ominous bottle (vanilla only drops one outside raids),
@@ -307,5 +353,11 @@ messages:
   upload-create-button: "<green><u>click here to burn it</u></green>"
   upload-off: "<red>The song upload website isn't set up yet."
   upload-no-customdiscs: "<red>CustomDiscs isn't installed."
+  customitem-usage: "<gray>Usage: <white>/customitem give <player> <item></white> or <white>/customitem list</white>"
+  customitem-list: "<gray>Prize items: <white><items></white>"
+  customitem-none: "<gray>No prize items are set up (custom-items in config.yml)."
+  customitem-no-player: "<red><player> isn't online."
+  customitem-unknown: "<red>No prize item called <white><item></white>. <gray>/customitem list"
+  customitem-given: "<green>Gave <white><item></white> to <white><player></white>."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."

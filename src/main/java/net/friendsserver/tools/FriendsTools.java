@@ -18,6 +18,8 @@ public final class FriendsTools extends JavaPlugin {
     private PvpManager pvp;
     private DiscUpload discUpload;
     private ServerPack serverPack;
+    private CustomItems customItems;
+    private BuffGolems buffGolems;
 
     @Override
     public void onEnable() {
@@ -92,6 +94,16 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(serverPack, this);
         serverPack.load();
 
+        // One-of-a-kind prize items (look from the server pack, can't be faked by renaming) + /customitem
+        customItems = new CustomItems(this);
+        customItems.load();
+        bind("customitem", customItems);
+
+        // Prize golems with a custom model (display entities on an invisible golem, rig from the server pack)
+        buffGolems = new BuffGolems(this, customItems);
+        getServer().getPluginManager().registerEvents(buffGolems, this);
+        buffGolems.start();
+
         // Runs once the server has finished starting, when every plugin is enabled
         getServer().getScheduler().runTask(this, () -> {
             if (getServer().getPluginManager().getPlugin("Paper_Stasis_Fixer") != null
@@ -146,6 +158,9 @@ public final class FriendsTools extends JavaPlugin {
         if (discUpload != null) {
             discUpload.stop();
         }
+        if (buffGolems != null) {
+            buffGolems.stop();
+        }
     }
 
     @Override
@@ -168,6 +183,12 @@ public final class FriendsTools extends JavaPlugin {
             }
             if (serverPack != null) {
                 serverPack.load();
+            }
+            if (customItems != null) {
+                customItems.load();
+            }
+            if (buffGolems != null) {
+                buffGolems.start();
             }
             messages.send(sender, "reloaded");
             return true;
