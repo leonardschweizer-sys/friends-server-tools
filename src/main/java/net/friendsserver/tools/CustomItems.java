@@ -3,6 +3,9 @@ package net.friendsserver.tools;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Equippable;
 import io.papermc.paper.datacomponent.item.ItemLore;
+import io.papermc.paper.datacomponent.item.UseCooldown;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -15,6 +18,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemRarity;
@@ -42,8 +46,9 @@ final class CustomItems implements TabExecutor {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH);
 
     /** One entry of custom-items in config.yml. */
-    record Definition(String id, Material material, Key model, Key wings, String rig, String name,
-                      List<String> lore, String forAdvancement) {
+    record Definition(String id, Material material, Key model, Key worn, boolean onHead, String rig, String ability,
+                      boolean placedModel, Map<Key, Integer> enchantments, String name, List<String> lore,
+                      String forAdvancement) {
     }
 
     private final FriendsTools plugin;
@@ -76,12 +81,28 @@ final class CustomItems implements TabExecutor {
                 continue;
             }
             Key model = key(s.getString("model"), id, "model");
-            Key wings = key(s.getString("wings"), id, "wings");
-            if (s.getString("model") != null && model == null || s.getString("wings") != null && wings == null) {
+            Key worn = key(s.getString("worn"), id, "worn");
+            if (s.getString("model") != null && model == null || s.getString("worn") != null && worn == null) {
                 continue;
             }
+            if (worn != null && material.getEquipmentSlot() != EquipmentSlot.HEAD
+                    && material.getEquipmentSlot() != EquipmentSlot.CHEST) {
+                plugin.getLogger().warning("custom-items." + id + ": worn only works for helmets and elytras");
+                worn = null;
+            }
+            Map<Key, Integer> enchants = new LinkedHashMap<>();
+            ConfigurationSection ench = s.getConfigurationSection("enchantments");
+            if (ench != null) {
+                for (String e : ench.getKeys(false)) {
+                    Key k = key(e.contains(":") ? e : "minecraft:" + e, id, "enchantments");
+                    if (k != null) {
+                        enchants.put(k, ench.getInt(e, 1));
+                    }
+                }
+            }
             definitions.put(id.toLowerCase(Locale.ROOT), new Definition(id.toLowerCase(Locale.ROOT), material, model,
-                    wings, s.getString("golem"), s.getString("name", id), s.getStringList("lore"),
+                    worn, s.getBoolean("on-head", false), s.getString("golem"), s.getString("ability"),
+                    s.getBoolean("placed-model", false), enchants, s.getString("name", id), s.getStringList("lore"),
                     s.getString("for", "")));
         }
     }
@@ -128,13 +149,34 @@ final class CustomItems implements TabExecutor {
         if (def.model() != null) {
             item.setData(DataComponentTypes.ITEM_MODEL, def.model());
         }
-        if (def.wings() != null) {
-            // Same as a normal elytra, but with its own wing texture when worn
-            item.setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(EquipmentSlot.CHEST)
-                    .equipSound(Key.key("minecraft", "item.armor.equip_elytra"))
-                    .assetId(def.wings())
-                    .damageOnHurt(false)
+        boolean elytra = def.material() == Material.ELYTRA;
+        if (def.worn() != null) {
+            // Same as the normal item, but with its own look when worn (elytra wings or a helmet texture)
+            EquipmentSlot slot = elytra ? EquipmentSlot.CHEST : EquipmentSlot.HEAD;
+            item.setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot)
+                    .equipSound(Key.key("minecraft", elytra ? "item.armor.equip_elytra" : "item.armor.equip_netherite"))
+                    .assetId(def.worn())
+                    .damageOnHurt(!elytra)
                     .build());
+        } else if (def.onHead()) {
+            // Worn on the head and shown as its own 3D model there (hats, halo)
+            item.setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(EquipmentSlot.HEAD)
+                    .equipSound(Key.key("minecraft", "item.armor.equip_netherite"))
+                    .build());
+        }
+        if ("reusable_totem".equals(def.ability())) {
+            // own cooldown group, so the recharge overlay only shows on this item
+            item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(1f)
+                    .cooldownGroup(Key.key("friendstools", def.id())).build());
+        }
+        for (Map.Entry<Key, Integer> e : def.enchantments().entrySet()) {
+            Enchantment enchantment = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
+                    .get(new NamespacedKey(e.getKey().namespace(), e.getKey().value()));
+            if (enchantment == null) {
+                plugin.getLogger().warning("custom-items." + def.id() + ": unknown enchantment " + e.getKey().asString());
+            } else {
+                item.addUnsafeEnchantment(enchantment, e.getValue());
+            }
         }
         if (def.rig() != null) {
             item.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);

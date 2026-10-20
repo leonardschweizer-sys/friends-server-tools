@@ -201,8 +201,11 @@ resource-pack:
 custom-items:
   # One-of-a-kind prizes (only-once advancements). Their look comes from pack.zip through a hidden item model,
   # so naming a normal item the same in an anvil does nothing. Give one with /customitem give <player> <id>.
-  #   material: the item it is (best tier), model: look from pack.zip, wings: elytra look when worn,
-  #   golem: spawns a prize golem with this rig from pack.zip, for: advancement shown in the lore
+  #   material: the item it is (best tier)      model: look from pack.zip
+  #   worn: look when worn (helmets, elytras)  on-head: wear it and show its 3D model on the head (hats)
+  #   enchantments: comes with these           golem: spawns a prize golem with this rig from pack.zip
+  #   ability: lightning | reusable_totem      placed-model: keeps its look when placed as a block
+  #   for: advancement shown in the lore
   bulldozer_drill:
     material: NETHERITE_PICKAXE
     model: friends:bulldozer_drill
@@ -211,7 +214,7 @@ custom-items:
   phantom_wings:
     material: ELYTRA
     model: friends:phantom_wings
-    wings: friends:phantom_wings
+    worn: friends:phantom_wings
     name: "<#8fa3ff>Phantom Wings"
     for: "Caves & Cliffs"
   susus_gigantus:
@@ -230,7 +233,7 @@ custom-items:
   dragon_wings:
     material: ELYTRA
     model: friends:dragon_wings
-    wings: friends:dragon_wings
+    worn: friends:dragon_wings
     name: "<#b04cff>Dragon Wings"
     for: "At the Rim of the Sky"
   frying_pan:
@@ -238,6 +241,166 @@ custom-items:
     model: friends:frying_pan
     name: "<#c8c8c8>Frying Pan"
     for: "The Next Generation"
+  dragonslayer:
+    material: NETHERITE_SWORD
+    model: friends:dragonslayer
+    name: "<#9a9aa6>Dragonslayer"
+    for: "Free the End"
+  icarus_wings:
+    material: ELYTRA
+    model: friends:icarus_wings
+    worn: friends:icarus_wings
+    name: "<#f5e6b8>Icarus' Wings"
+    lore:
+      - "<gray>Invisible when you wear them."
+    for: "Ad Astra"
+  dragonborn_wings:
+    material: ELYTRA
+    model: friends:dragon_wings
+    worn: friends:dragon_wings
+    name: "<#b04cff>Dragonborn Wings"
+    for: "Dragon vs Dragon II: Electric Boogaloo"
+  lightsaber:
+    material: NETHERITE_SWORD
+    model: friends:lightsaber
+    name: "<#e8e8ff>Lightsaber"
+    for: "Constellation"
+  halo:
+    material: NETHERITE_HELMET
+    model: friends:halo
+    on-head: true
+    name: "<#ffe14d>Martyr's Halo"
+    for: "Death From All"
+  kite_shield:
+    material: SHIELD
+    model: friends:kite_shield
+    name: "<#6db8ff>Kite Shield"
+    for: "Dragon Army"
+  black_crown:
+    material: NETHERITE_HELMET
+    model: friends:black_crown
+    worn: friends:black_crown
+    name: "<#5a5560>Black Crown"
+    for: "Dragon vs Wither: The Pre-Sequel"
+  end_scythe:
+    material: MACE
+    model: friends:end_scythe
+    name: "<#c9a0ff>End Scythe"
+    for: "Endergeddon"
+  oiia_compass:
+    material: RECOVERY_COMPASS
+    model: friends:oiia_compass
+    name: "<#e0c080>Oiia Compass"
+    lore:
+      - "<gray>Points to where you last died."
+    for: "Explorer of Worlds"
+  terrarian_pickaxe:
+    material: NETHERITE_PICKAXE
+    model: friends:terrarian_pickaxe
+    name: "<gradient:#ff6ad5:#7a5cff>Terrarian Pickaxe</gradient>"
+    for: "Farlander"
+  heart_totem:
+    material: TOTEM_OF_UNDYING
+    model: friends:heart_totem
+    name: "<#ff4040>Heart Totem"
+    for: "Global Vaccination"
+  neptune_trident:
+    material: TRIDENT
+    model: friends:neptune_trident
+    name: "<#5fd3b0>Trident of Neptune"
+    for: "Hearts of the Stack"
+  pirate_hat:
+    material: NETHERITE_HELMET
+    model: friends:pirate_hat
+    worn: friends:pirate_hat
+    name: "<#c0a060>Pirate King's Hat"
+    for: "I am Loot!"
+  space_helmet:
+    material: NETHERITE_HELMET
+    model: friends:space_helmet
+    worn: friends:space_helmet
+    name: "<#bfe8ff>Space Helmet"
+    for: "I'm in Space!"
+  nokia:
+    material: TOTEM_OF_UNDYING
+    model: friends:nokia
+    ability: reusable_totem
+    name: "<#9fb4c8>Nokia 3310"
+    lore:
+      - "<gray>Saves you like a totem, but it doesn't break."
+      - "<gray>Needs to recharge after it saved you."
+    for: "Immortal"
+  mjolnir:
+    material: TRIDENT
+    model: friends:mjolnir
+    ability: lightning
+    enchantments:
+      loyalty: 3
+      channeling: 1
+    name: "<#d0d8e8>Mjölnir"
+    lore:
+      - "<gray>Calls down lightning on every hit, even without a storm."
+    for: "Nuclear Fusion"
+  warden_helmet:
+    material: NETHERITE_HELMET
+    model: friends:warden_helmet
+    on-head: true
+    name: "<#1fb5c9>True Warden Helmet"
+    for: "Overwarden"
+  piglin_axe:
+    material: NETHERITE_AXE
+    model: friends:piglin_axe
+    name: "<#e8b04a>Piglin King's Axe"
+    for: "Poglin!"
+  camera:
+    material: SPYGLASS
+    model: friends:camera
+    name: "<#d0d0d0>Camera"
+    for: "Telescopic"
+  devil_pitchfork:
+    material: TRIDENT
+    model: friends:devil_pitchfork
+    name: "<#ff2a2a>Devil's Pitchfork"
+    for: "The Devil's Distance"
+  katana:
+    material: NETHERITE_SWORD
+    model: friends:katana
+    name: "<#f0d060>Katana"
+    for: "The World Is Ending"
+  wizard_hat:
+    material: NETHERITE_HELMET
+    model: friends:wizard_hat
+    on-head: true
+    name: "<#9a6bff>Wizard Hat"
+    for: "Ultimate Enchanter"
+  nether_reactor:
+    material: BEACON
+    model: friends:nether_reactor
+    placed-model: true
+    name: "<#7fdcff>Nether Reactor Core"
+    lore:
+      - "<gray>A beacon that keeps this look when placed."
+    for: "Warlock"
+  stormbreaker:
+    material: TRIDENT
+    model: friends:stormbreaker
+    name: "<#c8d4e0>Stormbreaker"
+    for: "We're in the endgame now"
+  anchor:
+    material: MACE
+    model: friends:anchor
+    name: "<#8aa0c0>Anchor"
+    for: "Abyss Lord"
+  plague_mask:
+    material: NETHERITE_HELMET
+    model: friends:plague_mask
+    on-head: true
+    name: "<#7a8a70>Plague Doctor Mask"
+    for: "Biological Warfare"
+
+prize-powers:
+  # Nokia 3310: minutes until it can save you again
+  totem-recharge-minutes: 10
 
 buff-golem:
   # Prize golem stats (a normal iron golem has 100 health and 15 attack damage)
@@ -359,5 +522,6 @@ messages:
   customitem-no-player: "<red><player> isn't online."
   customitem-unknown: "<red>No prize item called <white><item></white>. <gray>/customitem list"
   customitem-given: "<green>Gave <white><item></white> to <white><player></white>."
+  nokia-saved: "<aqua>Your Nokia 3310 saved you!</aqua> <gray>It needs <white><minutes> min</white> to recharge."
   players-only: "<red>Only players can use this."
   reloaded: "<green>FriendsTools config reloaded."

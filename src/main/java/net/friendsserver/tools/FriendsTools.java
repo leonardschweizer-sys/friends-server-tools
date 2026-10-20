@@ -104,6 +104,9 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(buffGolems, this);
         buffGolems.start();
 
+        // What some prize items do (Mjölnir lightning, Nokia totem, Nether Reactor Core look when placed)
+        getServer().getPluginManager().registerEvents(new PrizePowers(this, customItems), this);
+
         // Runs once the server has finished starting, when every plugin is enabled
         getServer().getScheduler().runTask(this, () -> {
             if (getServer().getPluginManager().getPlugin("Paper_Stasis_Fixer") != null
