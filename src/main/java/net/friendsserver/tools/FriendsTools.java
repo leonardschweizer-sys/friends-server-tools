@@ -20,6 +20,7 @@ public final class FriendsTools extends JavaPlugin {
     private ServerPack serverPack;
     private CustomItems customItems;
     private BuffGolems buffGolems;
+    private AdvancementGate advancementGate;
 
     @Override
     public void onEnable() {
@@ -107,6 +108,11 @@ public final class FriendsTools extends JavaPlugin {
         // What some prize items do (Mjölnir lightning, Nokia totem, Nether Reactor Core look when placed)
         getServer().getPluginManager().registerEvents(new PrizePowers(this, customItems), this);
 
+        // Advancements only count in survival, BACAP rewards once per player (not again on world changes)
+        advancementGate = new AdvancementGate(this, customItems);
+        getServer().getPluginManager().registerEvents(advancementGate, this);
+        advancementGate.start();
+
         // Runs once the server has finished starting, when every plugin is enabled
         getServer().getScheduler().runTask(this, () -> {
             if (getServer().getPluginManager().getPlugin("Paper_Stasis_Fixer") != null
@@ -164,6 +170,9 @@ public final class FriendsTools extends JavaPlugin {
         if (buffGolems != null) {
             buffGolems.stop();
         }
+        if (advancementGate != null) {
+            advancementGate.stop();
+        }
     }
 
     @Override
@@ -192,6 +201,9 @@ public final class FriendsTools extends JavaPlugin {
             }
             if (buffGolems != null) {
                 buffGolems.start();
+            }
+            if (advancementGate != null) {
+                advancementGate.start();
             }
             messages.send(sender, "reloaded");
             return true;

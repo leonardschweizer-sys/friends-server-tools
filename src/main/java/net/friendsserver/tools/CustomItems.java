@@ -49,7 +49,7 @@ final class CustomItems implements TabExecutor {
     /** One entry of custom-items in config.yml. */
     record Definition(String id, int number, Material material, Key model, Key worn, boolean onHead, String rig,
                       String ability, boolean placedModel, Map<Key, Integer> enchantments, String name,
-                      List<String> lore, String forAdvancement) {
+                      List<String> lore, String forAdvancement, String advancement) {
     }
 
     private final FriendsTools plugin;
@@ -69,7 +69,11 @@ final class CustomItems implements TabExecutor {
     void load() {
         definitions.clear();
         byNumber.clear();
-        ConfigurationSection all = plugin.getConfig().getConfigurationSection("custom-items");
+        // An older config.yml without custom-items uses the list from the plugin (Bukkit would hand out an
+        // empty section here instead of the defaults)
+        var cfg = plugin.getConfig();
+        ConfigurationSection all = cfg.contains("custom-items", true) ? cfg.getConfigurationSection("custom-items")
+                : cfg.getDefaults() == null ? null : cfg.getDefaults().getConfigurationSection("custom-items");
         if (all == null) {
             return;
         }
@@ -114,7 +118,7 @@ final class CustomItems implements TabExecutor {
             Definition def = new Definition(id.toLowerCase(Locale.ROOT), number, material, model, worn,
                     s.getBoolean("on-head", false), s.getString("golem"), s.getString("ability"),
                     s.getBoolean("placed-model", false), enchants, s.getString("name", id), s.getStringList("lore"),
-                    s.getString("for", ""));
+                    s.getString("for", ""), s.getString("advancement", "").trim().toLowerCase(Locale.ROOT));
             definitions.put(def.id(), def);
             byNumber.put(number, def);
         }
@@ -130,6 +134,17 @@ final class CustomItems implements TabExecutor {
             plugin.getLogger().warning("custom-items." + id + "." + field + ": not a valid id: " + text);
             return null;
         }
+    }
+
+    /** Prize items given for completing this advancement (e.g. "blazeandcave:mining/bulldozer"). */
+    List<Definition> forAdvancement(String key) {
+        List<Definition> out = new ArrayList<>();
+        for (Definition def : byNumber.values()) {
+            if (def.advancement().equals(key)) {
+                out.add(def);
+            }
+        }
+        return out;
     }
 
     /** By id ("katana") or by number ("21"). */
