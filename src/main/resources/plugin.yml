@@ -38,6 +38,11 @@ commands:
     description: Pick the title you wear (from advancements), /titles only-once shows who has the rare ones
     usage: /titles [page|<title>|off|only-once]
     permission: friendstools.title
+  pack:
+    description: Install the server texture pack yourself so it doesn't load on every join
+    usage: /pack [local|server]
+    aliases: [texturepack]
+    permission: friendstools.pack
   customitem:
     description: Gives prize items (for testing), /ci list shows their numbers
     usage: /customitem <number|name|all|list> or /customitem give <player> <number|name|all>
@@ -99,6 +104,9 @@ permissions:
   friendstools.title.admin:
     description: Give or take titles with /titles give|take <player> <title>
     default: op
+  friendstools.pack:
+    description: Use /pack
+    default: true
   friendstools.customitem:
     description: Give prize items with /customitem (/ci)
     default: op

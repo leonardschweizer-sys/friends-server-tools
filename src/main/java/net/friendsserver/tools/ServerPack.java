@@ -6,7 +6,14 @@ import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import net.kyori.adventure.resource.ResourcePackStatus;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,7 +28,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.io.File;
 import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -34,8 +44,12 @@ import java.util.concurrent.TimeoutException;
  * every player while they log in (in the loading screen, before they see the world), so it never reloads in front of
  * them. Players who said no once get asked again when the pack is required; accepting once makes their client load it
  * without asking from then on.
+ *
+ * <p>Players with slow PCs can install pack.zip themselves (/pack shows how) and run /pack local: then it isn't sent
+ * to them at all, so nothing loads when they join. When pack.zip changes they get the new one from the server once and
+ * a link to update their own copy.</p>
  */
-final class ServerPack implements Listener {
+final class ServerPack implements Listener, TabExecutor {
 
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("friendstools:server-pack".getBytes(StandardCharsets.UTF_8));
     private static final long MAX_BYTES = 100L * 1024 * 1024;
@@ -43,6 +57,10 @@ final class ServerPack implements Listener {
     private final FriendsTools plugin;
     /** Players whose client already got the pack while logging in. */
     private final Set<UUID> sentAtLogin = ConcurrentHashMap.newKeySet();
+    /** Players who installed the pack themselves: uuid -> pack hash they have. */
+    private final Map<UUID, String> local = new ConcurrentHashMap<>();
+    /** Local players whose copy is old: told on join. */
+    private final Set<UUID> outdated = ConcurrentHashMap.newKeySet();
     private volatile byte[] bytes;
     private volatile String sha1;
 
@@ -52,6 +70,7 @@ final class ServerPack implements Listener {
 
     /** (Re)reads the pack file; if it changed, players who are online get the new one. */
     void load() {
+        loadLocal();
         String oldHash = sha1;
         bytes = null;
         sha1 = null;
@@ -78,7 +97,14 @@ final class ServerPack implements Listener {
             return;
         }
         if (oldHash != null && !oldHash.equals(sha1)) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> Bukkit.getOnlinePlayers().forEach(this::send), 20L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    send(p);
+                    if (local.containsKey(p.getUniqueId())) {
+                        tellOutdated(p);
+                    }
+                }
+            }, 20L);
         }
     }
 
@@ -95,6 +121,13 @@ final class ServerPack implements Listener {
             return;
         }
         UUID id = connection.getProfile().getId();
+        if (id != null && local.containsKey(id)) {
+            if (sha1.equals(local.get(id))) {
+                sentAtLogin.add(id); // has it installed: nothing to load
+                return;
+            }
+            outdated.add(id); // their copy is old: send the new one this time
+        }
         CompletableFuture<ResourcePackStatus> done = new CompletableFuture<>();
         request.callback((packId, status, audience) -> {
             if (!status.intermediate()) {
@@ -135,7 +168,14 @@ final class ServerPack implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        if (outdated.remove(player.getUniqueId())) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> tellOutdated(player), 60L);
+        }
         if (sentAtLogin.remove(player.getUniqueId())) {
+            return;
+        }
+        String mine = local.get(player.getUniqueId());
+        if (mine != null && mine.equals(sha1)) {
             return;
         }
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -181,5 +221,89 @@ final class ServerPack implements Listener {
             request.prompt(MiniMessage.miniMessage().deserialize(prompt));
         }
         return request;
+    }
+
+    // ---- /pack, /pack local, /pack server
+
+    private String link() {
+        String base = plugin.discUpload() == null ? null : plugin.discUpload().publicBaseUrl();
+        return base == null || sha1 == null ? null : base + "/pack.zip?v=" + sha1;
+    }
+
+    private Component linkButton() {
+        String url = link();
+        return url == null ? plugin.messages().component("pack-no-link")
+                : plugin.messages().component("pack-link-button").clickEvent(ClickEvent.openUrl(url));
+    }
+
+    private void tellOutdated(Player p) {
+        if (p.isOnline()) {
+            plugin.messages().send(p, "pack-outdated", Placeholder.component("link", linkButton()));
+        }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player p)) {
+            plugin.messages().send(sender, "players-only");
+            return true;
+        }
+        if (sha1 == null) {
+            plugin.messages().send(p, "pack-none");
+            return true;
+        }
+        String sub = args.length == 0 ? "" : args[0].toLowerCase(java.util.Locale.ROOT);
+        switch (sub) {
+            case "local" -> {
+                local.put(p.getUniqueId(), sha1);
+                saveLocal();
+                plugin.messages().send(p, "pack-local-on");
+            }
+            case "server" -> {
+                local.remove(p.getUniqueId());
+                saveLocal();
+                plugin.messages().send(p, "pack-local-off");
+            }
+            default -> plugin.messages().send(p, local.containsKey(p.getUniqueId()) ? "pack-info-local" : "pack-info",
+                    Placeholder.component("link", linkButton()));
+        }
+        return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        return args.length == 1 ? List.of("local", "server").stream().filter(o -> o.startsWith(args[0].toLowerCase(java.util.Locale.ROOT))).toList()
+                : List.of();
+    }
+
+    private File localFile() {
+        return new File(plugin.getDataFolder(), "pack-local.yml");
+    }
+
+    private void loadLocal() {
+        local.clear();
+        File f = localFile();
+        if (!f.exists()) {
+            return;
+        }
+        YamlConfiguration yml = YamlConfiguration.loadConfiguration(f);
+        for (String key : yml.getKeys(false)) {
+            try {
+                local.put(UUID.fromString(key), yml.getString(key, ""));
+            } catch (IllegalArgumentException ignored) {
+                // skip broken lines
+            }
+        }
+    }
+
+    private void saveLocal() {
+        YamlConfiguration yml = new YamlConfiguration();
+        yml.options().setHeader(List.of("Players who installed pack.zip themselves (/pack local): uuid -> pack version they have"));
+        local.forEach((id, hash) -> yml.set(id.toString(), hash));
+        try {
+            yml.save(localFile());
+        } catch (IOException e) {
+            plugin.getLogger().warning("Could not save pack-local.yml: " + e);
+        }
     }
 }

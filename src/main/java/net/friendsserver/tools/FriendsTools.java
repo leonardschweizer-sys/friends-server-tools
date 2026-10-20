@@ -95,6 +95,7 @@ public final class FriendsTools extends JavaPlugin {
         serverPack = new ServerPack(this);
         getServer().getPluginManager().registerEvents(serverPack, this);
         serverPack.load();
+        bind("pack", serverPack);
 
         // One-of-a-kind prize items (look from the server pack, can't be faked by renaming) + /customitem
         customItems = new CustomItems(this);
