@@ -5,8 +5,14 @@ import io.papermc.paper.advancement.AdvancementDisplay;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.advancement.Advancement;
+import org.bukkit.advancement.AdvancementProgress;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -29,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,6 +53,8 @@ import java.util.UUID;
  *       BACAP's settings (scoreboard bac_settings) are kept off, and switched on only in the moment a player
  *       really completes an advancement for the first time.</li>
  *   <li>Prize items (custom-items with "advancement") are given on that first real completion.</li>
+ *   <li>Far-travel advancements the world border makes impossible (Farlander wants x or z 29,999,983) count at a
+ *       distance that can be reached (advancements.reach-distance).</li>
  * </ul>
  */
 final class AdvancementGate implements Listener {
@@ -73,6 +82,11 @@ final class AdvancementGate implements Listener {
     private boolean prizeItems;
     private int quietTicks;
     private BukkitTask saver;
+    /** Advancement -> distance from 0,0 (x or z) at which it counts. */
+    private final Map<NamespacedKey, Double> reach = new LinkedHashMap<>();
+    private BukkitTask reachTask;
+    /** You can't stand exactly on the border: this close to the distance is enough. */
+    private static final double REACH_SLACK = 2.0;
 
     AdvancementGate(FriendsTools plugin, CustomItems items) {
         this.plugin = plugin;
@@ -115,6 +129,7 @@ final class AdvancementGate implements Listener {
             quiet(p);
         }
         saver = Bukkit.getScheduler().runTaskTimer(plugin, this::save, 600L, 600L);
+        startReach();
     }
 
     void stop() {
@@ -122,7 +137,78 @@ final class AdvancementGate implements Listener {
             saver.cancel();
             saver = null;
         }
+        if (reachTask != null) {
+            reachTask.cancel();
+            reachTask = null;
+        }
         save();
+    }
+
+    // ---- far-travel advancements (advancements.reach-distance)
+
+    private void startReach() {
+        reach.clear();
+        var cfg = plugin.getConfig();
+        String path = "advancements.reach-distance";
+        // an older config.yml without the section uses the plugin's (Bukkit would hand out an empty one)
+        ConfigurationSection section = cfg.contains(path, true) ? cfg.getConfigurationSection(path)
+                : cfg.getDefaults() == null ? null : cfg.getDefaults().getConfigurationSection(path);
+        if (section != null) {
+            for (String name : section.getKeys(false)) {
+                NamespacedKey key = NamespacedKey.fromString(name);
+                double distance = section.getDouble(name, 0);
+                if (key == null || distance <= 0) {
+                    plugin.getLogger().warning(path + ": \"" + name + "\" needs an advancement and a distance above 0.");
+                    continue;
+                }
+                reach.put(key, distance);
+            }
+        }
+        if (reach.isEmpty()) {
+            return;
+        }
+        reachTask = Bukkit.getScheduler().runTaskTimer(plugin, this::checkReach, 100L, 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (NamespacedKey key : reach.keySet()) {
+                if (Bukkit.getAdvancement(key) == null) {
+                    plugin.getLogger().warning(path + ": there is no advancement " + key + " (datapack missing?)");
+                }
+            }
+        }, 60L);
+    }
+
+    private void checkReach() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.getGameMode() == GameMode.SPECTATOR || !counts(p.getWorld())) {
+                continue;
+            }
+            Location at = p.getLocation();
+            WorldBorder border = p.getWorld().getWorldBorder();
+            Location center = border.getCenter();
+            double half = border.getSize() / 2;
+            for (Map.Entry<NamespacedKey, Double> e : reach.entrySet()) {
+                double d = e.getValue();
+                // the distance, or the world's border if that comes first (as far as anyone can get)
+                boolean far = at.getX() >= Math.min(d, center.getX() + half) - REACH_SLACK
+                        || at.getX() <= Math.max(-d, center.getX() - half) + REACH_SLACK
+                        || at.getZ() >= Math.min(d, center.getZ() + half) - REACH_SLACK
+                        || at.getZ() <= Math.max(-d, center.getZ() - half) + REACH_SLACK;
+                if (!far) {
+                    continue;
+                }
+                Advancement adv = Bukkit.getAdvancement(e.getKey());
+                if (adv == null) {
+                    continue;
+                }
+                AdvancementProgress progress = p.getAdvancementProgress(adv);
+                for (String criterion : List.copyOf(progress.getRemainingCriteria())) {
+                    if (progress.isDone()) {
+                        break;
+                    }
+                    progress.awardCriteria(criterion); // rewards, title and prize item come with it as usual
+                }
+            }
+        }
     }
 
     private boolean counts(World world) {

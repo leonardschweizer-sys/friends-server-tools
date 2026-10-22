@@ -488,6 +488,11 @@ advancements:
   prize-items: true
   # After coming into survival, advancements granted in this time are Multiverse-Inventories putting them back
   ignore-seconds-after-world-change: 3
+  # Far-travel advancements the world border makes impossible: they count once you get this far from 0,0 (x or z,
+  # within 2 blocks, since nobody can stand exactly on the border). If a world's border comes first, reaching
+  # that border counts. Add more lines the same way ("advancement": distance).
+  reach-distance:
+    "blazeandcave:challenges/farlander": 49999
 
 titles:
   # Titles come from plugins/FriendsTools/titles.yml (made with the planner). Everyone who completes an advancement in
