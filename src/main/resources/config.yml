@@ -14,7 +14,7 @@ chestlog:
 
 biome:
   enabled: true
-  cost-diamonds: 32
+  cost-diamonds: 4
   # Worlds where /biome works (Bukkit world names)
   worlds:
     - world
@@ -165,6 +165,15 @@ death-heads:
   enabled: true
   # Death message and date on the head
   lore: true
+
+invisible-splash:
+  # A splash potion of invisibility makes placed armor stands and item frames (also glow item frames) where it lands
+  # invisible, within 4 blocks. What's on them stays visible. Breaking one drops a normal one again.
+  enabled: true
+  armor-stands: true
+  item-frames: true
+  # Worlds where it works (empty = everywhere)
+  worlds: []
 
 disc-upload:
   # /upload gives a player a private link to a small website where they upload an mp3, wav or flac file.
