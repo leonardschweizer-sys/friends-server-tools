@@ -356,9 +356,9 @@ custom-items:
     material: NETHERITE_HELMET
     model: friends:pirate_hat
     worn: friends:pirate_hat
-    name: "<#c0a060>Pirate King's Hat"
-    for: "I am Loot!"
-    advancement: blazeandcave:challenges/i_am_loot
+    name: "<#c0a060>Pirate Captain's Hat"
+    for: "Sailor of the Seven Seas"
+    advancement: blazeandcave:statistics/sailor_of_the_seven_seas
   space_helmet:
     number: 20
     material: NETHERITE_HELMET
@@ -467,6 +467,16 @@ custom-items:
     name: "<#7a8a70>Plague Doctor Mask"
     for: "Biological Warfare"
     advancement: blazeandcave:challenges/biological_warfare
+  straw_hat:
+    number: 33
+    material: NETHERITE_HELMET
+    model: friends:straw_hat
+    on-head: true
+    name: "<#f0d27a>Straw Hat"
+    lore:
+      - "<gray>Every chest opened, every treasure taken."
+    for: "I am Loot!"
+    advancement: blazeandcave:challenges/i_am_loot
 
 advancements:
   # Advancements only make progress in these worlds. In all others (lobby, creative, speedrun) nothing is earned.
@@ -484,6 +494,9 @@ advancements:
     xp: true
     # BACAP co-op mode: when one player gets an advancement, everyone online gets it too
     coop: false
+    # Advancements with a prize item from custom-items give that instead of BACAP's item reward and trophy
+    # (BACAP's message and XP still come)
+    not-with-prize-items: true
   # Prize items from custom-items go to everyone who completes their advancement
   prize-items: true
   # After coming into survival, advancements granted in this time are Multiverse-Inventories putting them back

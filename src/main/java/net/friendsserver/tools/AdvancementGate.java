@@ -13,13 +13,17 @@ import org.bukkit.WorldBorder;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -52,7 +56,9 @@ import java.util.UUID;
  *       BACAP runs its reward for every grant, so players got flooded with old rewards.
  *       BACAP's settings (scoreboard bac_settings) are kept off, and switched on only in the moment a player
  *       really completes an advancement for the first time.</li>
- *   <li>Prize items (custom-items with "advancement") are given on that first real completion.</li>
+ *   <li>Prize items (custom-items with "advancement") are given on that first real completion, to every player
+ *       who completes it. Those advancements don't also give BACAP's item reward and trophy.</li>
+ *   <li>Advancements an admin takes away with /advancement revoke can be earned and rewarded again.</li>
  *   <li>Far-travel advancements the world border makes impossible (Farlander wants x or z 29,999,983) count at a
  *       distance that can be reached (advancements.reach-distance).</li>
  * </ul>
@@ -69,6 +75,9 @@ final class AdvancementGate implements Listener {
     private final Set<UUID> seeded = new HashSet<>();
     private final Map<UUID, Integer> quietUntil = new HashMap<>();
     private final Map<UUID, int[]> burst = new HashMap<>(); // {tick, completions in that tick}
+    private final Map<UUID, Integer> burstUntil = new HashMap<>();
+    /** More completions than this in one tick are advancements being put back or handed out in bulk, not earned. */
+    private static final int BURST = 5;
     private final Set<String> worlds = new HashSet<>();
     private File file;
     private boolean dirty;
@@ -79,6 +88,7 @@ final class AdvancementGate implements Listener {
     private boolean bacapTrophies;
     private boolean bacapXp;
     private boolean bacapCoop;
+    private boolean notWithPrize;
     private boolean prizeItems;
     private int quietTicks;
     private BukkitTask saver;
@@ -106,6 +116,7 @@ final class AdvancementGate implements Listener {
         bacapTrophies = cfg.getBoolean("advancements.bacap-rewards.trophies", true);
         bacapXp = cfg.getBoolean("advancements.bacap-rewards.xp", true);
         bacapCoop = cfg.getBoolean("advancements.bacap-rewards.coop", false);
+        notWithPrize = cfg.getBoolean("advancements.bacap-rewards.not-with-prize-items", true);
         prizeItems = cfg.getBoolean("advancements.prize-items", true);
         quietTicks = Math.max(20, cfg.getInt("advancements.ignore-seconds-after-world-change", 3) * 20);
 
@@ -227,8 +238,19 @@ final class AdvancementGate implements Listener {
 
     /** A completion right now is a real first one (not a re-grant by a world change). */
     private boolean firstTime(Player p, String key) {
-        return Bukkit.getCurrentTick() >= quietUntil.getOrDefault(p.getUniqueId(), 0)
-                && !rewardedOf(p).contains(key);
+        UUID id = p.getUniqueId();
+        int now = Bukkit.getCurrentTick();
+        if (rewardedOf(p).contains(key) || now < burstUntil.getOrDefault(id, 0)) {
+            return false;
+        }
+        // Before we know what a player already had, advancements granted right after coming into survival are
+        // Multiverse-Inventories putting them back. Once we know (seeded), those are all in the rewarded list.
+        return seeded.contains(id) || now >= quietUntil.getOrDefault(id, 0);
+    }
+
+    /** This advancement gives a prize item, so BACAP's own item reward and trophy are left out. */
+    private boolean prizeInstead(String key) {
+        return prizeItems && notWithPrize && !items.forAdvancement(key).isEmpty();
     }
 
     // ---- events
@@ -245,7 +267,8 @@ final class AdvancementGate implements Listener {
             return;
         }
         // BACAP's reward function runs right after the last criterion is granted, with these settings
-        setBacap(firstTime(p, adv.getKey().toString()));
+        String key = adv.getKey().toString();
+        setBacap(firstTime(p, key), prizeInstead(key));
         if (!resetPlanned) {
             resetPlanned = true;
             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -270,16 +293,25 @@ final class AdvancementGate implements Listener {
             b[0] = now;
             b[1] = 0;
         }
-        if (++b[1] > 3) {
-            quietUntil.put(p.getUniqueId(), now + quietTicks);
+        if (++b[1] > BURST) {
+            burstUntil.put(p.getUniqueId(), now + quietTicks);
         }
         boolean first = firstTime(p, key);
-        if (rewardedOf(p).add(key)) {
+        boolean hadIt = !rewardedOf(p).add(key);
+        if (!hadIt) {
             dirty = true;
         }
         if (!first) {
+            // say why, but not for the ones Multiverse-Inventories puts back on every world change
+            boolean settled = now >= quietUntil.getOrDefault(p.getUniqueId(), 0)
+                    && now >= burstUntil.getOrDefault(p.getUniqueId(), 0);
+            if (settled && hadIt && prizeItems && !items.forAdvancement(key).isEmpty()) {
+                plugin.getLogger().info(p.getName() + " got " + key + " again: no prize item, they were rewarded"
+                        + " for it before (an admin /advancement revoke makes it count again).");
+            }
             return;
         }
+        save(); // right away, so a crash can't make it pay out twice
         Titles titles = plugin.titles();
         if (titles != null) {
             titles.completed(p, key);
@@ -337,6 +369,70 @@ final class AdvancementGate implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         quietUntil.remove(event.getPlayer().getUniqueId());
         burst.remove(event.getPlayer().getUniqueId());
+        burstUntil.remove(event.getPlayer().getUniqueId());
+    }
+
+    // An admin taking advancements away (/advancement revoke): those can be earned and rewarded again.
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+        revokeCommand(event.getPlayer(), event.getMessage());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onServerCommand(ServerCommandEvent event) {
+        revokeCommand(event.getSender(), event.getCommand());
+    }
+
+    private void revokeCommand(CommandSender sender, String line) {
+        String[] args = line.trim().replaceFirst("^/", "").split("\\s+");
+        if (args.length < 3 || !args[1].equalsIgnoreCase("revoke")) {
+            return;
+        }
+        String command = args[0].toLowerCase(Locale.ROOT);
+        if (!command.equals("advancement") && !command.equals("minecraft:advancement")) {
+            return;
+        }
+        List<Player> targets = new ArrayList<>();
+        try {
+            for (Entity e : Bukkit.selectEntities(sender, args[2])) {
+                if (e instanceof Player p) {
+                    targets.add(p);
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            Player p = Bukkit.getPlayerExact(args[2]);
+            if (p != null) {
+                targets.add(p);
+            }
+        }
+        if (!targets.isEmpty()) {
+            // the command runs after this event: look next tick
+            Bukkit.getScheduler().runTask(plugin, () -> targets.forEach(this::forgetRevoked));
+        }
+    }
+
+    private void forgetRevoked(Player p) {
+        // only in survival and not while Multiverse-Inventories is swapping advancements around
+        if (!p.isOnline() || !counts(p.getWorld()) || !seeded.contains(p.getUniqueId())
+                || Bukkit.getCurrentTick() < quietUntil.getOrDefault(p.getUniqueId(), 0)) {
+            return;
+        }
+        int forgotten = 0;
+        for (Iterator<String> it = rewardedOf(p).iterator(); it.hasNext(); ) {
+            NamespacedKey key = NamespacedKey.fromString(it.next());
+            Advancement adv = key == null ? null : Bukkit.getAdvancement(key);
+            if (adv != null && !p.getAdvancementProgress(adv).isDone()) {
+                it.remove();
+                forgotten++;
+            }
+        }
+        if (forgotten > 0) {
+            dirty = true;
+            save();
+            plugin.getLogger().info(p.getName() + " can earn " + forgotten + " revoked advancement(s) again,"
+                    + " with rewards and prize items.");
+        }
     }
 
     /**
@@ -380,6 +476,10 @@ final class AdvancementGate implements Listener {
     // ---- BACAP settings
 
     private void setBacap(boolean on) {
+        setBacap(on, false);
+    }
+
+    private void setBacap(boolean on, boolean prizeInstead) {
         if (!controlBacap) {
             return;
         }
@@ -390,8 +490,8 @@ final class AdvancementGate implements Listener {
         for (String tier : MESSAGE_TIERS) {
             set(settings, tier, on && bacapMessages ? 1 : 0);
         }
-        set(settings, "reward", on && bacapItems ? 1 : 0);
-        set(settings, "trophy", on && bacapTrophies ? 1 : 0);
+        set(settings, "reward", on && bacapItems && !prizeInstead ? 1 : 0);
+        set(settings, "trophy", on && bacapTrophies && !prizeInstead ? 1 : 0);
         set(settings, "exp", on && bacapXp ? 1 : 0);
         // BACAP co-op grants every advancement to everyone online; never for advancements being put back
         set(settings, "coop", on && bacapCoop ? 1 : 0);
