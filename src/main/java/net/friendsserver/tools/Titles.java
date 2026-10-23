@@ -50,8 +50,11 @@ final class Titles implements Listener, TabExecutor {
     private static final int PAGE = 30;
 
     /** One advancement's titles. */
-    record Entry(String advancement, String title, int rank, String first) {
+    /** rank 1-4 = how hard (its color), color = optional own color for this title (e.g. "pink"). */
+    record Entry(String advancement, String title, int rank, String first, String color) {
     }
+
+    private static final String[] ROMAN = {"I", "II", "III", "IV"};
 
     /** Who holds an only-once title. */
     record Claim(UUID player, String name, String date) {
@@ -84,7 +87,8 @@ final class Titles implements Listener, TabExecutor {
                 String first = blankToNull(s.getString("first"));
                 if (title != null || first != null) {
                     String key = adv.toLowerCase(Locale.ROOT);
-                    map.put(key, new Entry(key, title, s.getInt("rank", 1) >= 2 ? 2 : 1, first));
+                    int rank = Math.max(1, Math.min(4, s.getInt("rank", 1)));
+                    map.put(key, new Entry(key, title, rank, first, blankToNull(s.getString("color"))));
                 }
             }
             plugin.getLogger().info("Titles: " + map.size() + " advancements with titles loaded.");
@@ -225,12 +229,30 @@ final class Titles implements Listener, TabExecutor {
         return MM.deserialize(prefix).append(MM.deserialize(text, resolver));
     }
 
-    /** The title text in its rank color, without brackets. */
+    private static final String[] RANK_COLORS = {"<#8ff0a4><title>", "<#5cb8ff><title>", "<#b98cff><title>",
+            "<gradient:#ff6b6b:#e0283c><title></gradient>"};
+
+    /** The title text in its color (rank, its own color, or only-once gold), without brackets. */
     private Component tagged(Entry e, boolean first) {
-        String fmt = plugin.getConfig().getString(first ? "titles.colors.only-once" : "titles.colors.rank-" + e.rank(),
-                first ? "<gradient:#ffe066:#ffaa00><title></gradient>"
-                        : e.rank() == 2 ? "<gradient:#ff6b6b:#e0283c><title></gradient>" : "<#ff8ac8><title>");
+        String fmt;
+        if (first) {
+            fmt = plugin.getConfig().getString("titles.colors.only-once", "<gradient:#ffe066:#ffaa00><title></gradient>");
+        } else if (e.color() != null) {
+            fmt = ownColor(e.color());
+        } else {
+            fmt = plugin.getConfig().getString("titles.colors.rank-" + e.rank(), RANK_COLORS[e.rank() - 1]);
+        }
         return MM.deserialize(fmt, Placeholder.unparsed("title", first ? e.first() : e.title()));
+    }
+
+    /** A title's own color: a name from titles.colors (like "pink"), a color tag ("<#ff8ac8>", "<gradient:...>"),
+     *  or a color name/hex without brackets ("light_purple", "#ff8ac8"). */
+    private String ownColor(String color) {
+        String named = plugin.getConfig().getString("titles.colors." + color.toLowerCase(Locale.ROOT));
+        if (named != null && named.contains("<title>")) {
+            return named;
+        }
+        return color.startsWith("<") ? color + "<title>" : "<" + color + "><title>";
     }
 
     private TagResolver component(Entry e, boolean first) {
@@ -307,7 +329,9 @@ final class Titles implements Listener, TabExecutor {
             }
         }
         List<Map.Entry<String, Entry>> list = new ArrayList<>(out.entrySet());
-        list.sort(Comparator.comparing(x -> text(x).toLowerCase(Locale.ROOT)));
+        // rarest first: only-once titles, then rank IV down to I, each by name
+        list.sort(Comparator.<Map.Entry<String, Entry>>comparingInt(x -> x.getKey().endsWith(FIRST) ? 0 : 5 - x.getValue().rank())
+                .thenComparing(x -> text(x).toLowerCase(Locale.ROOT)));
         return list;
     }
 
@@ -399,7 +423,7 @@ final class Titles implements Listener, TabExecutor {
                     .append(tagged(x.getValue(), first))
                     .hoverEvent(HoverEvent.showText(Component.text("From: ", NamedTextColor.GRAY)
                             .append(advancementName(adv))
-                            .append(Component.text(first ? "\nOnly-once title" : "\nRank " + (x.getValue().rank() == 2 ? "II" : "I"),
+                            .append(Component.text(first ? "\nOnly-once title" : "\nRank " + ROMAN[x.getValue().rank() - 1],
                                     NamedTextColor.DARK_GRAY))
                             .append(Component.text("\nClick to wear it", NamedTextColor.YELLOW))))
                     .clickEvent(ClickEvent.runCommand("/titles wear " + x.getKey()));

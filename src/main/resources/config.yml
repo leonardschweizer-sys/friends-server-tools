@@ -533,10 +533,15 @@ titles:
   # How the worn title looks in front of the name
   badge: "<dark_gray>[</dark_gray><title><dark_gray>]</dark_gray> "
   colors:
-    # rank 1 = the easier titles, rank 2 = the harder ones; gold is kept for only-once titles
-    rank-1: "<#ff8ac8><title>"
-    rank-2: "<gradient:#ff6b6b:#e0283c><title></gradient>"
+    # By the "rank" in titles.yml: 1 = common/easy, 2 = a bit harder, 3 = hard, 4 = very hard.
+    # Gold is only for only-once titles.
+    rank-1: "<#8ff0a4><title>"
+    rank-2: "<#5cb8ff><title>"
+    rank-3: "<#b98cff><title>"
+    rank-4: "<gradient:#ff6b6b:#e0283c><title></gradient>"
     only-once: "<gradient:#ffe066:#ffaa00><title></gradient>"
+    # Extra colors a single title can use with "color: pink" in titles.yml (a color tag like "<#ff8ac8>" works too)
+    pink: "<#ff8ac8><title>"
 
 prize-powers:
   # Nokia 3310: minutes until it can save you again
