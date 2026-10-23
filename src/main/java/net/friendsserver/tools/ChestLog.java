@@ -169,7 +169,7 @@ final class ChestLog implements Listener, CommandExecutor, TabCompleter {
 
         List<Entry> newestFirst = new ArrayList<>(entries);
         java.util.Collections.reverse(newestFirst);
-        int pageSize = Math.max(1, plugin.getConfig().getInt("chestlog.page-size", 8));
+        int pageSize = Math.max(1, plugin.getConfig().getInt("chestlog.page-size", 10));
         int pages = (newestFirst.size() + pageSize - 1) / pageSize;
         int page = 1;
         if (args.length >= 1) {
@@ -195,6 +195,10 @@ final class ChestLog implements Listener, CommandExecutor, TabCompleter {
                     "ago", ago(now - e.t),
                     "player", e.p,
                     "action", e.a);
+        }
+        net.kyori.adventure.text.Component nav = PageNav.of("/chestlog", page, pages);
+        if (nav != null) {
+            player.sendMessage(nav);
         }
         return true;
     }

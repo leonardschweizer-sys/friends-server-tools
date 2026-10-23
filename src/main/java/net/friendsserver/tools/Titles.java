@@ -50,11 +50,12 @@ final class Titles implements Listener, TabExecutor {
     private static final int PAGE = 30;
 
     /** One advancement's titles. */
-    /** rank 1-4 = how hard (its color), color = optional own color for this title (e.g. "pink"). */
+    /** rank 0-4 = how hard (its color), color = optional own color for this title (e.g. "pink"). */
     record Entry(String advancement, String title, int rank, String first, String color) {
     }
 
-    private static final String[] ROMAN = {"I", "II", "III", "IV"};
+    /** Names of the ranks 0-4, shown when hovering a title. */
+    private static final String[] TIERS = {"Very easy", "Easy", "A bit harder", "Hard", "Very hard"};
 
     /** Who holds an only-once title. */
     record Claim(UUID player, String name, String date) {
@@ -87,7 +88,7 @@ final class Titles implements Listener, TabExecutor {
                 String first = blankToNull(s.getString("first"));
                 if (title != null || first != null) {
                     String key = adv.toLowerCase(Locale.ROOT);
-                    int rank = Math.max(1, Math.min(4, s.getInt("rank", 1)));
+                    int rank = Math.max(0, Math.min(4, s.getInt("rank", 1)));
                     map.put(key, new Entry(key, title, rank, first, blankToNull(s.getString("color"))));
                 }
             }
@@ -229,7 +230,7 @@ final class Titles implements Listener, TabExecutor {
         return MM.deserialize(prefix).append(MM.deserialize(text, resolver));
     }
 
-    private static final String[] RANK_COLORS = {"<#8ff0a4><title>", "<#5cb8ff><title>", "<#b98cff><title>",
+    private static final String[] RANK_COLORS = {"<#ff8ac8><title>", "<#8ff0a4><title>", "<#5cb8ff><title>", "<#b98cff><title>",
             "<gradient:#ff6b6b:#e0283c><title></gradient>"};
 
     /** The title text in its color (rank, its own color, or only-once gold), without brackets. */
@@ -240,7 +241,7 @@ final class Titles implements Listener, TabExecutor {
         } else if (e.color() != null) {
             fmt = ownColor(e.color());
         } else {
-            fmt = plugin.getConfig().getString("titles.colors.rank-" + e.rank(), RANK_COLORS[e.rank() - 1]);
+            fmt = plugin.getConfig().getString("titles.colors.rank-" + e.rank(), RANK_COLORS[e.rank()]);
         }
         return MM.deserialize(fmt, Placeholder.unparsed("title", first ? e.first() : e.title()));
     }
@@ -270,6 +271,20 @@ final class Titles implements Listener, TabExecutor {
             return adv.getDisplay().title();
         }
         return Component.text(key);
+    }
+
+    /**
+     * Where the player goes in the tab list: the rarer the worn title, the higher (Paper shows bigger numbers first).
+     * 7 only-once, 6 very hard ... 2 very easy, 1 no title.
+     */
+    int listOrder(Player p) {
+        String w = worn.get(p.getUniqueId());
+        if (w == null || badge(p) == null) {
+            return 1;
+        }
+        boolean first = w.endsWith(FIRST);
+        Entry e = entries.get(first ? w.substring(0, w.length() - FIRST.length()) : w);
+        return e == null ? 1 : first ? 7 : 2 + e.rank();
     }
 
     /** The worn title as shown before the name ([Title]), or null. Safe to call from the chat thread. */
@@ -354,6 +369,7 @@ final class Titles implements Listener, TabExecutor {
         if (args.length >= 3 && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("take"))
                 && sender.hasPermission("friendstools.title.admin")) {
             adminGiveTake(sender, args);
+            plugin.refreshTab();
             return true;
         }
         if (!(sender instanceof Player p)) {
@@ -423,23 +439,15 @@ final class Titles implements Listener, TabExecutor {
                     .append(tagged(x.getValue(), first))
                     .hoverEvent(HoverEvent.showText(Component.text("From: ", NamedTextColor.GRAY)
                             .append(advancementName(adv))
-                            .append(Component.text(first ? "\nOnly-once title" : "\nRank " + ROMAN[x.getValue().rank() - 1],
+                            .append(Component.text(first ? "\nOnly-once title" : "\n" + TIERS[x.getValue().rank()],
                                     NamedTextColor.DARK_GRAY))
                             .append(Component.text("\nClick to wear it", NamedTextColor.YELLOW))))
                     .clickEvent(ClickEvent.runCommand("/titles wear " + x.getKey()));
             line = line.append(chip).append(Component.text("  "));
         }
         p.sendMessage(line);
-        if (pages > 1) {
-            Component nav = Component.empty();
-            if (page > 1) {
-                nav = nav.append(Component.text("« previous  ", NamedTextColor.YELLOW)
-                        .clickEvent(ClickEvent.runCommand("/titles " + (page - 1))));
-            }
-            if (page < pages) {
-                nav = nav.append(Component.text("next »", NamedTextColor.YELLOW)
-                        .clickEvent(ClickEvent.runCommand("/titles " + (page + 1))));
-            }
+        Component nav = PageNav.of("/titles", page, pages);
+        if (nav != null) {
             p.sendMessage(nav);
         }
     }

@@ -8,7 +8,7 @@ chestlog:
   # Entries older than this are removed (0 = keep forever)
   keep-days: 90
   # Entries shown per page in /chestlog
-  page-size: 8
+  page-size: 10
   # How far away the container you look at may be
   max-distance: 6
 
@@ -528,13 +528,16 @@ titles:
   # survival unlocks its title; "first" titles only go to the first player. /titles to pick one.
   in-chat: true
   in-tab: true
+  # Sort the tab list by the worn title: only-once on top, then very hard down to very easy, no title last
+  sort-tab: true
   # Tell everyone when someone gets an only-once title
   announce-only-once: true
   # How the worn title looks in front of the name
   badge: "<dark_gray>[</dark_gray><title><dark_gray>]</dark_gray> "
   colors:
-    # By the "rank" in titles.yml: 1 = common/easy, 2 = a bit harder, 3 = hard, 4 = very hard.
+    # By the "rank" in titles.yml: 0 = very easy, 1 = easy, 2 = a bit harder, 3 = hard, 4 = very hard.
     # Gold is only for only-once titles.
+    rank-0: "<#ff8ac8><title>"
     rank-1: "<#8ff0a4><title>"
     rank-2: "<#5cb8ff><title>"
     rank-3: "<#b98cff><title>"
@@ -693,4 +696,10 @@ messages:
   pack-none: "<red>There is no server texture pack right now."
   players-only: "<red>Only players can use this."
   chat-share-expired: "<gray>That inventory was shared too long ago to look at."
+  progress-usage: "<gray>Usage: <white>/progress <advancement> [page]</white>, e.g. <white>/progress potion_master</white> (tab shows the names)"
+  progress-unknown: "<red>No advancement called <white><name></white>. Use tab to see the names."
+  progress-secret: "<gray>That advancement is a secret until you get it."
+  progress-wrong-world: "<red>Advancements only count in survival, so use /progress there."
+  progress-header: "<gold><advancement></gold> <gray>· <white><done>/<total></white> done<status></gray>"
+  progress-completed: " · <green>completed ✔</green>"
   reloaded: "<green>FriendsTools config reloaded."

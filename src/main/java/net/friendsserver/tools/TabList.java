@@ -92,6 +92,14 @@ final class TabList implements Listener {
     }
 
     private void update(Player player) {
+        // rarer worn title = higher in the tab list
+        Titles titles = plugin.titles();
+        if (titles != null && plugin.getConfig().getBoolean("titles.sort-tab", true)) {
+            int order = titles.listOrder(player);
+            if (player.getPlayerListOrder() != order) {
+                player.setPlayerListOrder(order);
+            }
+        }
         Component name = build(player);
         if (!name.equals(lastSent.get(player.getUniqueId()))) {
             player.playerListName(name);

@@ -90,6 +90,7 @@ public final class FriendsTools extends JavaPlugin {
         ChatShare chatShare = new ChatShare(this);
         getServer().getPluginManager().registerEvents(chatShare, this);
         bind("showinv", chatShare);
+        bind("progress", new ProgressCommand(this));
 
         // /upload: small website to upload songs straight into CustomDiscs
         discUpload = new DiscUpload(this);
