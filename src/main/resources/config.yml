@@ -166,6 +166,13 @@ death-heads:
   # Death message and date on the head
   lore: true
 
+chat-share:
+  # [item] (or [i]) in chat shows the item in your hand, with its tooltip on hover. [inventory] (or [inv]) becomes a
+  # button that opens a read-only copy of your inventory as it was when you sent the message.
+  enabled: true
+  # How long shared inventories can be opened
+  inventory-minutes: 15
+
 invisible-splash:
   # A splash potion of invisibility makes placed armor stands and item frames (also glow item frames) where it lands
   # invisible, within 4 blocks. What's on them stays visible. Breaking one drops a normal one again.
@@ -526,9 +533,10 @@ titles:
   # How the worn title looks in front of the name
   badge: "<dark_gray>[</dark_gray><title><dark_gray>]</dark_gray> "
   colors:
-    rank-1: "<green><title>"
-    rank-2: "<gold><title>"
-    only-once: "<gradient:#ff5555:#ffaa00><title></gradient>"
+    # rank 1 = the easier titles, rank 2 = the harder ones; gold is kept for only-once titles
+    rank-1: "<#ff8ac8><title>"
+    rank-2: "<gradient:#ff6b6b:#e0283c><title></gradient>"
+    only-once: "<gradient:#ffe066:#ffaa00><title></gradient>"
 
 prize-powers:
   # Nokia 3310: minutes until it can save you again
@@ -679,4 +687,5 @@ messages:
   pack-outdated: "<yellow>The server's texture pack changed, so you got the new one from the server.</yellow> <gray>Update your own copy:</gray> <link> <gray>(replace the old zip, then</gray> <white>/pack local</white><gray>)</gray>"
   pack-none: "<red>There is no server texture pack right now."
   players-only: "<red>Only players can use this."
+  chat-share-expired: "<gray>That inventory was shared too long ago to look at."
   reloaded: "<green>FriendsTools config reloaded."

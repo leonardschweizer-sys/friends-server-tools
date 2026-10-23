@@ -228,7 +228,8 @@ final class Titles implements Listener, TabExecutor {
     /** The title text in its rank color, without brackets. */
     private Component tagged(Entry e, boolean first) {
         String fmt = plugin.getConfig().getString(first ? "titles.colors.only-once" : "titles.colors.rank-" + e.rank(),
-                first ? "<gradient:#ff5555:#ffaa00><title></gradient>" : e.rank() == 2 ? "<gold><title>" : "<green><title>");
+                first ? "<gradient:#ffe066:#ffaa00><title></gradient>"
+                        : e.rank() == 2 ? "<gradient:#ff6b6b:#e0283c><title></gradient>" : "<#ff8ac8><title>");
         return MM.deserialize(fmt, Placeholder.unparsed("title", first ? e.first() : e.title()));
     }
 

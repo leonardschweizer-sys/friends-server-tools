@@ -22,6 +22,8 @@ Small Paper plugin for our 26.3 friends server.
 
 Also:
 - **Server texture pack:** `plugins/FriendsTools/pack.zip` is served by the upload website at `/pack.zip` and offered to everyone on join (`resource-pack.*`). Replace the file and `/friendstools reload` to update it.
+- **[item] and [inventory] in chat:** `[item]` (or `[i]`) shows the item in your hand with its tooltip on hover; `[inventory]` (or `[inv]`) becomes a button that opens a read-only copy of your inventory as it was when you sent the message (kept for `chat-share.inventory-minutes`). The message itself changes, so Discord shows the item name too. The button runs `/showinv <id>` (`friendstools.chatshare`, everyone).
+- **Title colors:** rank 1 pink, rank 2 red, only-once gold (`titles.colors`).
 - **Invisible armor stands and item frames:** a splash potion of invisibility makes placed armor stands and item frames (also glow ones) within 4 blocks invisible; what's on them stays visible. Breaking one drops a normal one again. `invisible-splash.*` in the config.
 - **Death heads:** every player death drops that player's head (with the death message and date), also with keepInventory.
 - **PvP marker above heads:** shown through PacketEvents with a separate copy of the player's team (same tag and color) on each client; the server's scoreboard and BetterTeams are not touched. Without PacketEvents the marker only shows in the tab list. PvP settings are saved in `plugins/FriendsTools/pvp.json`.

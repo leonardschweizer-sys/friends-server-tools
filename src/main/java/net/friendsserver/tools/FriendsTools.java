@@ -86,6 +86,10 @@ public final class FriendsTools extends JavaPlugin {
         // Every player death drops the player's head
         getServer().getPluginManager().registerEvents(new DeathHeads(this), this);
         getServer().getPluginManager().registerEvents(new InvisibleSplash(this), this);
+        // [item] and [inventory] in chat
+        ChatShare chatShare = new ChatShare(this);
+        getServer().getPluginManager().registerEvents(chatShare, this);
+        bind("showinv", chatShare);
 
         // /upload: small website to upload songs straight into CustomDiscs
         discUpload = new DiscUpload(this);

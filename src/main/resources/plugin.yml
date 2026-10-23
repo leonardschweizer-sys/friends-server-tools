@@ -71,6 +71,10 @@ commands:
     description: Resets the speedrun worlds for everyone (used by the lobby NPC from the console)
     usage: /speedrunreset [player]
     permission: friendstools.speedrun.reset
+  showinv:
+    description: Opens a copy of an inventory someone shared with [inventory] in chat (the chat button runs it)
+    usage: /showinv <id>
+    permission: friendstools.chatshare
   friendstools:
     description: Reloads the FriendsTools config
     usage: /friendstools reload
@@ -116,6 +120,9 @@ permissions:
   friendstools.speedrun.reset:
     description: Reset the speedrun worlds (the NPC runs it from the console, so players don't need this)
     default: op
+  friendstools.chatshare:
+    description: Look at inventories shared with [inventory] in chat
+    default: true
   friendstools.admin:
     description: Reload the config
     default: op

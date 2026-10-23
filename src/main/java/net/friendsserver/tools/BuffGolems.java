@@ -37,6 +37,8 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -299,6 +301,7 @@ final class BuffGolems implements Listener {
         if (def == null) {
             // No pack (or rig missing): show the normal golem instead of an invisible one
             golem.setInvisible(false);
+            golem.removePotionEffect(PotionEffectType.INVISIBILITY);
             return;
         }
         // stale pieces from before (e.g. after /friendstools reload)
@@ -307,7 +310,7 @@ final class BuffGolems implements Listener {
                 p.remove();
             }
         }
-        golem.setInvisible(true);
+        hide(golem);
         Rig rig = new Rig(golem, def);
         for (Piece piece : def.pieces()) {
             ItemStack look = ItemStack.of(Material.PAPER);
@@ -406,10 +409,22 @@ final class BuffGolems implements Listener {
         }
     }
 
+    /**
+     * The invisible flag alone isn't enough: the game resets it whenever the golem's effects change (beacons,
+     * potions) and doesn't save it. An endless hidden invisibility effect keeps the golem hidden in all of those cases.
+     */
+    private static void hide(IronGolem golem) {
+        golem.setInvisible(true);
+        if (!golem.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+            golem.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, PotionEffect.INFINITE_DURATION, 0,
+                    true, false, false));
+        }
+    }
+
     private void update(Rig rig) {
         IronGolem g = rig.golem;
-        if (!g.isInvisible()) {
-            g.setInvisible(true);
+        if (!g.isInvisible() || !g.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+            hide(g);
         }
         // walk animation: same smoothing as LivingEntity.updateWalkAnimation
         double dx = g.getX() - rig.lastX;

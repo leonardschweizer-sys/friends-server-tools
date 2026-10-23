@@ -25,6 +25,7 @@ import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -86,6 +87,25 @@ final class RemoteStasis implements Listener {
     void start() {
         load();
         Bukkit.getScheduler().runTaskTimer(plugin, this::checkCastHooks, 2L, 2L);
+        for (World world : Bukkit.getWorlds()) {
+            world.getEntitiesByClass(ArmorStand.class).forEach(this::keepHidden);
+        }
+    }
+
+    /** Stasis armor stands made by older versions only had the general invisible flag, which can get lost. */
+    @EventHandler
+    public void onEntitiesLoad(EntitiesLoadEvent event) {
+        for (Entity e : event.getEntities()) {
+            if (e instanceof ArmorStand stand) {
+                keepHidden(stand);
+            }
+        }
+    }
+
+    private void keepHidden(ArmorStand stand) {
+        if (stand.getPersistentDataContainer().has(ownerKey) && stand.isVisible()) {
+            stand.setVisible(false);
+        }
     }
 
     private boolean enabled() {
@@ -210,6 +230,7 @@ final class RemoteStasis implements Listener {
         Location at = plate.getLocation().add(0.5, 0, 0.5);
         ArmorStand stand = plate.getWorld().spawn(at, ArmorStand.class, s -> {
             s.setInvisible(true);
+            s.setVisible(false); // the armor stand's own flag too, or it can turn visible again
             s.setSmall(true);
             s.setGravity(false);
             s.setInvulnerable(true);
