@@ -91,6 +91,12 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatShare, this);
         bind("showinv", chatShare);
         bind("progress", new ProgressCommand(this));
+        // Survival versions of Axiom's Tinker, No Updates and Force Place
+        BuildTools buildTools = new BuildTools(this);
+        getServer().getPluginManager().registerEvents(buildTools, this);
+        bind("tinker", buildTools);
+        bind("noupdates", buildTools);
+        bind("forceplace", buildTools);
 
         // /upload: small website to upload songs straight into CustomDiscs
         discUpload = new DiscUpload(this);

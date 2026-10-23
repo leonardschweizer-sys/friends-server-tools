@@ -71,6 +71,20 @@ commands:
     description: Resets the speedrun worlds for everyone (used by the lobby NPC from the console)
     usage: /speedrunreset [player]
     permission: friendstools.speedrun.reset
+  tinker:
+    description: Right-click blocks with an empty hand to change their shape (like a debug stick), survival only
+    usage: /tinker [on|off]
+    permission: friendstools.tinker
+  noupdates:
+    description: Blocks you place don't update the blocks around them, survival only
+    usage: /noupdates [on|off]
+    aliases: [nu]
+    permission: friendstools.noupdates
+  forceplace:
+    description: Place blocks where they normally can't stay (floating torches, flowers on stone...), survival only
+    usage: /forceplace [on|off]
+    aliases: [fp]
+    permission: friendstools.forceplace
   progress:
     description: Shows how far you are with an advancement and which parts are done
     usage: /progress <advancement> [page]
@@ -124,6 +138,15 @@ permissions:
   friendstools.speedrun.reset:
     description: Reset the speedrun worlds (the NPC runs it from the console, so players don't need this)
     default: op
+  friendstools.tinker:
+    description: Use /tinker
+    default: true
+  friendstools.noupdates:
+    description: Use /noupdates
+    default: true
+  friendstools.forceplace:
+    description: Use /forceplace
+    default: true
   friendstools.progress:
     description: Use /progress
     default: true

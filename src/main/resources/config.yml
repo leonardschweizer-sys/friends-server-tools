@@ -119,9 +119,8 @@ stasis:
     - world_the_end
 
 tab:
-  # Tab list names: BetterTeams team tag + name in team color + [ping]. Replaces TabListPing, which hid team tags.
+  # Tab list names: worn title + name (+ the PvP marker), sorted by title. The ping is only shown with /ping.
   enabled: true
-  show-ping: true
   update-seconds: 3
 
 login:
@@ -172,6 +171,11 @@ chat-share:
   enabled: true
   # How long shared inventories can be opened
   inventory-minutes: 15
+
+build-tools:
+  # /tinker, /noupdates and /forceplace (survival versions of Axiom's Tinker, No Updates and Force Place) only work in
+  # these worlds (empty = everywhere). Blocks still cost items like normal.
+  worlds: [world, world_nether, world_the_end]
 
 invisible-splash:
   # A splash potion of invisibility makes placed armor stands and item frames (also glow item frames) where it lands
@@ -696,6 +700,12 @@ messages:
   pack-none: "<red>There is no server texture pack right now."
   players-only: "<red>Only players can use this."
   chat-share-expired: "<gray>That inventory was shared too long ago to look at."
+  build-tinker-on: "<green>Tinker is on.</green> <gray>Right-click a block with an empty hand to change it, sneak + right-click picks what to change. <white>/tinker</white> again turns it off."
+  build-noupdates-on: "<green>No updates is on.</green> <gray>Blocks you place don't update the blocks around them, and sand or gravel stays where you put it. <white>/noupdates</white> again turns it off."
+  build-forceplace-on: "<green>Force place is on.</green> <gray>Place blocks where they normally can't stay: flowers on any block, floating torches, lanterns, carpets, rails... Use it with <white>/noupdates</white> so they stay. <white>/forceplace</white> again turns it off."
+  build-tool-off: "<gray><tool> is off."
+  build-tools-wrong-world: "<yellow>It only works in survival, it starts working when you're there."
+  build-tinker-shown: "<gold><property></gold> <gray>=</gray> <white><value></white> <dark_gray>(sneak + right-click: change something else)"
   progress-usage: "<gray>Usage: <white>/progress <advancement> [page]</white>, e.g. <white>/progress potion_master</white> (tab shows the names)"
   progress-unknown: "<red>No advancement called <white><name></white>. Use tab to see the names."
   progress-secret: "<gray>That advancement is a secret until you get it."

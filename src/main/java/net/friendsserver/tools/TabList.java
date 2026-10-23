@@ -1,7 +1,6 @@
 package net.friendsserver.tools;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -137,11 +136,6 @@ final class TabList implements Listener {
         Component marker = pvp == null ? null : pvp.markerFor(player, true);
         if (marker != null) {
             result = result.append(Component.space()).append(marker);
-        }
-        if (plugin.getConfig().getBoolean("tab.show-ping", true)) {
-            result = result.append(Component.text(" [", NamedTextColor.GRAY))
-                    .append(PingCommand.pingComponent(player.getPing()))
-                    .append(Component.text("]", NamedTextColor.GRAY));
         }
         return result;
     }
