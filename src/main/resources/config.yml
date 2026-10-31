@@ -518,6 +518,15 @@ custom-items:
       - "<gray>Every chest opened, every treasure taken."
     for: "I am Loot!"
     advancement: blazeandcave:challenges/i_am_loot
+  riddler_spear:
+    number: 34
+    material: NETHERITE_SPEAR
+    model: friends:riddler_spear
+    name: "<gradient:#f5c542:#4caf50>Riddler's Cane</gradient>"
+    lore:
+      - "<gray>Riddle me this..."
+    for: "Riddle Me This"
+    advancement: blazeandcave:challenges/riddle_me_this
 
 advancements:
   # Advancements only make progress in these worlds. In all others (lobby, creative, speedrun) nothing is earned.
