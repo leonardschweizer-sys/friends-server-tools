@@ -172,6 +172,27 @@ chat-share:
   # How long shared inventories can be opened
   inventory-minutes: 15
 
+# BetterView keeps its far-chunk cache outside Java's heap by default, where -Xmx doesn't limit it. With a big view
+# distance the server can then use more memory than the host allows and gets killed (no log line, players see
+# "getsockopt"). true = keep it in the normal heap. Takes effect on the next restart.
+betterview-cache-in-heap: true
+
+travel:
+  # /lobby, /smp, /build, /speedrun: Multiverse teleports (like the lobby NPCs). blocked-in: worlds where the command
+  # doesn't work, so it can't be used as a free trip to spawn. Remove the old aliases for them from commands.yml.
+  lobby:
+    destination: lobby
+    blocked-in: []
+  smp:
+    destination: world
+    blocked-in: [world, world_nether, world_the_end]
+  build:
+    destination: creative
+    blocked-in: [creative]
+  speedrun:
+    destination: speedrun
+    blocked-in: [speedrun, speedrun_nether, speedrun_the_end]
+
 build-tools:
   # /tinker, /noupdates and /forceplace (survival versions of Axiom's Tinker, No Updates and Force Place) only work in
   # these worlds (empty = everywhere). Blocks still cost items like normal.
@@ -703,6 +724,7 @@ messages:
   build-tinker-on: "<green>Tinker is on.</green> <gray>Right-click a block with an empty hand to change it, sneak + right-click picks what to change. <white>/tinker</white> again turns it off."
   build-noupdates-on: "<green>No updates is on.</green> <gray>Blocks you place don't update the blocks around them, and sand or gravel stays where you put it. <white>/noupdates</white> again turns it off."
   build-forceplace-on: "<green>Force place is on.</green> <gray>Place blocks where they normally can't stay: flowers on any block, floating torches, lanterns, carpets, rails... Use it with <white>/noupdates</white> so they stay. <white>/forceplace</white> again turns it off."
+  travel-already-there: "<gray>You're already there."
   build-tool-off: "<gray><tool> is off."
   build-tools-wrong-world: "<yellow>It only works in survival, it starts working when you're there."
   build-tinker-shown: "<gold><property></gold> <gray>=</gray> <white><value></white> <dark_gray>(sneak + right-click: change something else)"

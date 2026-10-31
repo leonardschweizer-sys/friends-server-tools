@@ -23,6 +23,28 @@ public final class FriendsTools extends JavaPlugin {
     private AdvancementGate advancementGate;
     private Titles titles;
 
+    /**
+     * Runs before any plugin is enabled. BetterView keeps its far-chunk cache outside Java's heap by default, where
+     * -Xmx doesn't limit it, so with a big view distance the server can use more memory than the host allows and get
+     * killed without any log line. These two BetterView settings (read when it first builds its cache) keep it in the
+     * normal heap, where it's counted and freed like everything else.
+     */
+    @Override
+    public void onLoad() {
+        if (getConfig().getBoolean("betterview-cache-in-heap", true)) {
+            boolean set = false;
+            for (String key : new String[]{"betterview.alloc.heap", "betterview.alloc.unpooled"}) {
+                if (System.getProperty(key) == null) {
+                    System.setProperty(key, "true");
+                    set = true;
+                }
+            }
+            if (set) {
+                getLogger().info("BetterView's chunk cache is kept in the Java heap (betterview-cache-in-heap).");
+            }
+        }
+    }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -91,6 +113,11 @@ public final class FriendsTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatShare, this);
         bind("showinv", chatShare);
         bind("progress", new ProgressCommand(this));
+        // /lobby, /smp, /build, /speedrun (the commands.yml aliases looped on Paper 26.3)
+        TravelCommands travel = new TravelCommands(this);
+        for (String name : new String[]{"lobby", "smp", "build", "speedrun"}) {
+            bind(name, travel);
+        }
         // Survival versions of Axiom's Tinker, No Updates and Force Place
         BuildTools buildTools = new BuildTools(this);
         getServer().getPluginManager().registerEvents(buildTools, this);
