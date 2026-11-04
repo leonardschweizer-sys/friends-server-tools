@@ -42,9 +42,10 @@ final class AcmeClient {
 
     /** Sets and removes the _acme-challenge TXT record of the domain. */
     interface DnsTxt {
-        void set(String value) throws IOException, InterruptedException;
+        /** Sets the _acme-challenge TXT value for {@code domain}. */
+        void set(String domain, String value) throws IOException, InterruptedException;
 
-        void clear() throws IOException, InterruptedException;
+        void clear(String domain) throws IOException, InterruptedException;
     }
 
     private record Response(int status, String body, String location, String retryAfter) {
@@ -72,20 +73,23 @@ final class AcmeClient {
     }
 
     /**
-     * Gets a certificate for {@code domain}. Blocks for a few minutes (DNS propagation, validation).
+     * Gets one certificate for all {@code domains} (the first is the main name). Blocks for a few minutes per name
+     * (DNS propagation, validation); the names are checked one after the other.
      *
      * @return the certificate chain, leaf first
      */
-    List<X509Certificate> obtain(String domain, KeyPair domainKey, DnsTxt dns, Duration propagation)
+    List<X509Certificate> obtain(List<String> domains, KeyPair domainKey, DnsTxt dns, Duration propagation)
             throws IOException, GeneralSecurityException, InterruptedException {
         directory = get(directoryUrl).json();
         accountUrl = newAccount();
 
-        JsonObject identifier = new JsonObject();
-        identifier.addProperty("type", "dns");
-        identifier.addProperty("value", domain);
         JsonArray identifiers = new JsonArray();
-        identifiers.add(identifier);
+        for (String domain : domains) {
+            JsonObject identifier = new JsonObject();
+            identifier.addProperty("type", "dns");
+            identifier.addProperty("value", domain);
+            identifiers.add(identifier);
+        }
         JsonObject orderRequest = new JsonObject();
         orderRequest.add("identifiers", identifiers);
         Response created = post(url("newOrder"), orderRequest, false);
@@ -102,7 +106,7 @@ final class AcmeClient {
         order = poll(orderUrl, "ready", "valid");
         if (str(order, "status").equals("ready")) {
             JsonObject finalize = new JsonObject();
-            finalize.addProperty("csr", B64.encodeToString(csr(domain, domainKey)));
+            finalize.addProperty("csr", B64.encodeToString(csr(domains, domainKey)));
             post(str(order, "finalize"), finalize, false);
             order = poll(orderUrl, "valid");
         }
@@ -137,8 +141,9 @@ final class AcmeClient {
         }
         String keyAuthorization = str(challenge, "token") + "." + thumbprint();
         String txt = B64.encodeToString(sha256(keyAuthorization.getBytes(StandardCharsets.US_ASCII)));
+        String domain = auth.has("identifier") ? str(auth.getAsJsonObject("identifier"), "value") : "";
         try {
-            dns.set(txt);
+            dns.set(domain, txt);
             log.accept("DNS record set, waiting " + propagation.toSeconds() + " s before the check...");
             Thread.sleep(propagation.toMillis());
             post(str(challenge, "url"), new JsonObject(), false);
@@ -148,7 +153,7 @@ final class AcmeClient {
             }
         } finally {
             try {
-                dns.clear();
+                dns.clear(domain);
             } catch (IOException e) {
                 log.accept("Could not remove the DNS record again: " + e.getMessage());
             }
@@ -334,12 +339,16 @@ final class AcmeClient {
 
     // ------------------------------------------------------------------ CSR (PKCS#10, DER)
 
-    /** A certificate request for one DNS name, signed with the EC key (ecdsa-with-SHA256). */
-    static byte[] csr(String domain, KeyPair key) throws GeneralSecurityException {
+    /** A certificate request for these DNS names (the first is the common name), signed with the EC key. */
+    static byte[] csr(List<String> domains, KeyPair key) throws GeneralSecurityException {
         byte[] cn = oid(2, 5, 4, 3);
-        byte[] subject = seq(set(seq(cn, tlv(0x0C, domain.getBytes(StandardCharsets.UTF_8)))));
+        byte[] subject = seq(set(seq(cn, tlv(0x0C, domains.get(0).getBytes(StandardCharsets.UTF_8)))));
         byte[] spki = key.getPublic().getEncoded();
-        byte[] generalNames = seq(tlv(0x82, domain.getBytes(StandardCharsets.US_ASCII)));
+        byte[][] names = new byte[domains.size()][];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = tlv(0x82, domains.get(i).getBytes(StandardCharsets.US_ASCII));
+        }
+        byte[] generalNames = seq(names);
         byte[] extensions = seq(seq(oid(2, 5, 29, 17), tlv(0x04, generalNames)));
         byte[] extensionRequest = seq(oid(1, 2, 840, 113549, 1, 9, 14), set(extensions));
         byte[] attributes = tlv(0xA0, extensionRequest);

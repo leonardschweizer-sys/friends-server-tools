@@ -71,6 +71,10 @@ commands:
     description: Resets the speedrun worlds for everyone (used by the lobby NPC from the console)
     usage: /speedrunreset [player]
     permission: friendstools.speedrun.reset
+  calromea:
+    description: Link to the Calromea town plan website
+    usage: /calromea
+    permission: friendstools.sites
   lobby:
     description: Teleports you to the lobby
     usage: /lobby
@@ -154,6 +158,9 @@ permissions:
   friendstools.speedrun.reset:
     description: Reset the speedrun worlds (the NPC runs it from the console, so players don't need this)
     default: op
+  friendstools.sites:
+    description: Use the website link commands (/calromea)
+    default: true
   friendstools.travel:
     description: Use /lobby, /smp, /build and /speedrun
     default: true

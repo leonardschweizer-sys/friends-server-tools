@@ -17,8 +17,11 @@ import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +45,8 @@ final class HttpsCertificates {
     private SSLContext context;
     private ScheduledExecutorService worker;
     private volatile String domain;
+    /** All names on the certificate: the upload website's first, then the extra websites' (sites.*.domain). */
+    private volatile List<String> domains = List.of();
     private volatile X509Certificate current;
     private String subdomain;
     private String token;
@@ -119,6 +124,14 @@ final class HttpsCertificates {
         }
         token = token.trim();
         domain = subdomain + ".duckdns.org";
+        List<String> names = new ArrayList<>();
+        names.add(domain);
+        for (String extra : Sites.duckDnsNames(plugin.getConfig())) {
+            if (!names.contains(extra + ".duckdns.org")) {
+                names.add(extra + ".duckdns.org");
+            }
+        }
+        domains = List.copyOf(names);
         boolean staging = plugin.getConfig().getBoolean("disc-upload.https-staging", false);
         directoryUrl = staging ? AcmeClient.LETSENCRYPT_STAGING : AcmeClient.LETSENCRYPT;
         dir = plugin.getDataFolder().toPath().resolve("https").resolve(staging ? "staging" : "letsencrypt");
@@ -185,7 +198,7 @@ final class HttpsCertificates {
      */
     private long check() {
         X509Certificate cert = current;
-        if (cert != null && TlsSupport.covers(cert, domain) && !TlsSupport.needsRenewal(cert, Instant.now())) {
+        if (cert != null && coversAll(cert) && !TlsSupport.needsRenewal(cert, Instant.now())) {
             return 12;
         }
         boolean first = !ready();
@@ -201,8 +214,9 @@ final class HttpsCertificates {
         } catch (DuckDnsRefused e) {
             // Wrong name/token: retrying won't help until the config is fixed (a reload starts over right away)
             plugin.getLogger().warning("HTTPS: DuckDNS answered \"KO\": the token doesn't belong to "
-                    + subdomain + ".duckdns.org. Copy both again from duckdns.org into disc-upload.duckdns-domain"
-                    + " and duckdns-token, then /friendstools reload." + (first ? " The upload website uses http"
+                    + String.join(" / ", domains) + ". All names have to be in the same DuckDNS account as the"
+                    + " token. Copy them again from duckdns.org into disc-upload.duckdns-domain, duckdns-token"
+                    + " (and sites.*.domain), then /friendstools reload." + (first ? " The websites use http"
                     + " until then." : ""));
             return 12;
         } catch (Exception e) {
@@ -229,17 +243,26 @@ final class HttpsCertificates {
             TlsSupport.writeKey(accountFile, account);
         }
         KeyPair domainKey = TlsSupport.newKey();
-        plugin.getLogger().info("HTTPS: getting a certificate for " + domain
-                + " from Let's Encrypt, this takes about a minute...");
+        plugin.getLogger().info("HTTPS: getting a certificate for " + String.join(", ", domains)
+                + " from Let's Encrypt, this takes about a minute per name...");
         AcmeClient client = new AcmeClient(HTTP, directoryUrl, account,
                 message -> plugin.getLogger().info("HTTPS: " + message));
-        List<X509Certificate> chain = client.obtain(domain, domainKey, new DuckDnsTxt(), Duration.ofSeconds(60));
+        List<X509Certificate> chain = client.obtain(domains, domainKey, new DuckDnsTxt(), Duration.ofSeconds(60));
         TlsSupport.writeKey(dir.resolve("domain.key"), domainKey);
         TlsSupport.writeChain(dir.resolve("cert.pem"), chain);
         keys.use(domainKey.getPrivate(), chain);
         current = chain.get(0);
-        plugin.getLogger().info("HTTPS: certificate for " + domain + " is ready, valid until "
+        plugin.getLogger().info("HTTPS: certificate for " + String.join(", ", domains) + " is ready, valid until "
                 + current.getNotAfter().toInstant() + ". It renews itself.");
+    }
+
+    private boolean coversAll(X509Certificate cert) {
+        for (String name : domains) {
+            if (!TlsSupport.covers(cert, name)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Error text without the DuckDNS token. */
@@ -250,24 +273,30 @@ final class HttpsCertificates {
 
     /** The TXT record through DuckDNS' update API (it answers it for _acme-challenge.yourname.duckdns.org too). */
     private final class DuckDnsTxt implements AcmeClient.DnsTxt {
-        private boolean isSet;
+        private final Set<String> isSet = new HashSet<>();
 
         @Override
-        public void set(String value) throws IOException, InterruptedException {
-            call("&txt=" + URLEncoder.encode(value, StandardCharsets.UTF_8));
-            isSet = true;
+        public void set(String domain, String value) throws IOException, InterruptedException {
+            String name = nameFor(domain);
+            call(name, "&txt=" + URLEncoder.encode(value, StandardCharsets.UTF_8));
+            isSet.add(name);
         }
 
         @Override
-        public void clear() throws IOException, InterruptedException {
-            if (isSet) {
-                call("&txt=removed&clear=true");
-                isSet = false;
+        public void clear(String domain) throws IOException, InterruptedException {
+            String name = nameFor(domain);
+            if (isSet.remove(name)) {
+                call(name, "&txt=removed&clear=true");
             }
         }
 
-        private void call(String params) throws IOException, InterruptedException {
-            URI uri = URI.create("https://www.duckdns.org/update?domains=" + subdomain + "&token="
+        private String nameFor(String domain) {
+            String name = subdomain(domain);
+            return name.isEmpty() ? subdomain : name;
+        }
+
+        private void call(String name, String params) throws IOException, InterruptedException {
+            URI uri = URI.create("https://www.duckdns.org/update?domains=" + name + "&token="
                     + URLEncoder.encode(token, StandardCharsets.UTF_8) + params + "&verbose=true");
             HttpResponse<String> resp = HTTP.send(HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(30)).GET()
                     .build(), HttpResponse.BodyHandlers.ofString());

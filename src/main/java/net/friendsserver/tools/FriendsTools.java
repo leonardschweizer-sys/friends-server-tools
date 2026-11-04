@@ -17,6 +17,7 @@ public final class FriendsTools extends JavaPlugin {
     private LoginManager login;
     private PvpManager pvp;
     private DiscUpload discUpload;
+    private Sites sites;
     private ServerPack serverPack;
     private CustomItems customItems;
     private BuffGolems buffGolems;
@@ -124,6 +125,11 @@ public final class FriendsTools extends JavaPlugin {
         bind("tinker", buildTools);
         bind("noupdates", buildTools);
         bind("forceplace", buildTools);
+
+        // Extra websites on the same web server (sites.*), /calromea sends its link
+        sites = new Sites(this);
+        sites.load();
+        bind("calromea", sites);
 
         // /upload: small website to upload songs straight into CustomDiscs
         discUpload = new DiscUpload(this);
@@ -240,6 +246,9 @@ public final class FriendsTools extends JavaPlugin {
             if (pvp != null) {
                 pvp.reload();
             }
+            if (sites != null) {
+                sites.load();
+            }
             if (discUpload != null) {
                 discUpload.start();
             }
@@ -281,6 +290,10 @@ public final class FriendsTools extends JavaPlugin {
 
     DiscUpload discUpload() {
         return discUpload;
+    }
+
+    Sites sites() {
+        return sites;
     }
 
     ServerPack serverPack() {

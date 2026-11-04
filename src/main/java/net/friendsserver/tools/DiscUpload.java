@@ -250,6 +250,10 @@ final class DiscUpload implements CommandExecutor {
             String path = ex.getRequestURI().getPath();
             String method = ex.getRequestMethod();
 
+            // extra websites (sites.*): their own name, or /name/
+            if (plugin.sites() != null && plugin.sites().serve(ex)) {
+                return;
+            }
             if (path.equals("/pack.zip") && method.equals("GET")) {
                 byte[] pack = plugin.serverPack() == null ? null : plugin.serverPack().bytes();
                 if (pack == null) {
