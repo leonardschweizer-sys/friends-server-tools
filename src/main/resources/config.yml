@@ -235,9 +235,13 @@ sites:
   # domain: its own name too, e.g. "calromea" for calromea.duckdns.org (make it on duckdns.org in the SAME account as
   # duckdns-token, with the same IP). It then also goes on the https certificate. A full domain like "calromea.de"
   # works over http (point its A record to the server IP). /<name> in Minecraft sends the link (calromea only).
+  # board: true = the page can save comments and build marks (under construction / finished) through <site>/api/.
+  # They are kept in plugins/FriendsTools/sites/<name>-board.json (outside the site folder, so replacing the site's
+  # files never deletes them).
   calromea:
     domain: ""
     title: "Calromea Town Plan"
+    board: true
 
 resource-pack:
   # Server texture pack: put the zip at plugins/FriendsTools/pack.zip. It is sent while players log in (in the loading

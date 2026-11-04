@@ -31,7 +31,7 @@ import java.util.Map;
  */
 final class Sites implements CommandExecutor {
 
-    private record Site(String name, Path root, String host, String title) {
+    private record Site(String name, Path root, String host, String title, SiteBoard board) {
     }
 
     private static final Map<String, String> TYPES = Map.ofEntries(
@@ -107,7 +107,10 @@ final class Sites implements CommandExecutor {
                     host = d.contains(".") ? d : d + ".duckdns.org";
                 }
                 String title = section.getString(name + ".title", name);
-                map.put(key, new Site(key, root, host, title));
+                // comments + build marks for pages that use them (stored next to the site folder, not inside it)
+                SiteBoard board = section.getBoolean(name + ".board", false)
+                        ? new SiteBoard(plugin, base.resolve(key + "-board.json")) : null;
+                map.put(key, new Site(key, root, host, title, board));
                 if (!Files.exists(root.resolve("index.html"))) {
                     plugin.getLogger().warning("sites: put the website for " + key + " into " + root
                             + " (index.html first).");
@@ -156,12 +159,20 @@ final class Sites implements CommandExecutor {
             return false;
         }
         String method = ex.getRequestMethod();
+        // the site's own pages load fonts and scripts from elsewhere: not the upload website's strict rules
+        ex.getResponseHeaders().remove("Content-Security-Policy");
+        if (rest.startsWith("/api/")) {
+            if (site.board() == null) {
+                send(ex, 404, "text/plain; charset=utf-8", "Not found".getBytes(), method);
+            } else {
+                site.board().handle(ex, rest.substring(5));
+            }
+            return true;
+        }
         if (!method.equals("GET") && !method.equals("HEAD")) {
             send(ex, 405, "text/plain; charset=utf-8", "Method not allowed".getBytes(), method);
             return true;
         }
-        // the site's own pages load fonts and scripts from elsewhere: not the upload website's strict rules
-        ex.getResponseHeaders().remove("Content-Security-Policy");
         ex.getResponseHeaders().set("Cache-Control", "no-cache");
         if (rest.isEmpty() || rest.endsWith("/")) {
             rest = rest + "index.html";
